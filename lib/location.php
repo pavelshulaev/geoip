@@ -90,7 +90,7 @@ class Location
 	 * @return bool
 	 * @author Pavel Shulaev (http://rover-it.me)
 	 */
-	protected static function getCurIp()
+	public static function getCurIp()
 	{
 		$ips = [];
 		$server = Application::getInstance()->getContext()->getServer();
