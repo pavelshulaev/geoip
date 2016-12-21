@@ -187,6 +187,15 @@ class Location
 	 * @return mixed
 	 * @author Pavel Shulaev (http://rover-it.me)
 	 */
+	public function getIp()
+	{
+		return $this->data['ip'];
+	}
+
+	/**
+	 * @return mixed
+	 * @author Pavel Shulaev (http://rover-it.me)
+	 */
 	public function getCity()
 	{
 		return $this->data['city'];
