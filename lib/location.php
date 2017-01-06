@@ -130,7 +130,7 @@ class Location
 	 */
 	protected function load()
 	{
-		// Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ°ĞµĞ¼ Ğ´Ğ°Ğ½Ğ½Ñ‹Ğµ Ğ¿Ğ¾ ip
+		// ïîëó÷àåì äàííûå ïî ip
 		$link = 'ipgeobase.ru:7020/geo?ip=' . $this->ip;
 
 		$ch = curl_init();
@@ -181,6 +181,15 @@ class Location
 	public function getData()
 	{
 		return $this->data;
+	}
+
+	/**
+	 * @return mixed
+	 * @author Pavel Shulaev (http://rover-it.me)
+	 */
+	public function getIp()
+	{
+		return $this->data['ip'];
 	}
 
 	/**

@@ -37,25 +37,34 @@
 	
 ###`public getCity()`
 Возвращает город, либо `null`, если не удалось получить результат.	
-
 ###`public getCountry()`
 Возвращает код страны, либо `null`, если не удалось получить результат.	
-
 ###`public getCountryName($lang = LANGUAGE_ID)`
 Возвращает название страны для переданного кода языка (по умолчанию - текщуий язык сайта), либо `null`, если не удалось получить результат. По умолчанию в модуле доступны названия только на русском языке.
-	
 ###`public getRegion()`
 Возвращает регион, либо `null`, если не удалось получить результат.	
-	
 ###`public getDistrict()`
 Возвращает район, либо `null`, если не удалось получить результат.
-		
 ###`public getLat()`
 Возвращает широту, либо `null`, если не удалось получить результат.	
-			
 ###`public getLng()`
-Возвращает долготу, либо `null`, если не удалось получить результат.	
-				
+Возвращает долготу, либо `null`, если не удалось получить результат.					
 ###`public getInetnum()`
 Возвращает диапазон адресов, в скоторый входит переданный ip, либо `null`, если не удалось получить результат.	
+#Пример использования
+
+	\Bitrix\Main\Loader::includeModule('rover.geoip');
+
+	echo \Rover\GeoIp\Location::getCurIp(); // текущий ip
+
+	$location = \Rover\GeoIp\Location::getInstance('5.255.255.88'); // yandex.ru
 	
+	echo $location->getIp();        // 5.255.255.88
+	echo $location->getCity();      // Москва
+	echo $location->getCountry();   // RU
+	echo $location->getCountryName();  // Россия
+	echo $location->getRegion();    // Москва
+	echo $location->getDistrict();  // Центральный федеральный округ
+	echo $location->getLat();       // 55.755787
+	echo $location->getLng();       // 37.617634
+	echo $location->getInetnum();   // 5.255.252.0 - 5.255.255.255
