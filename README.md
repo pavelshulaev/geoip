@@ -63,11 +63,14 @@
 Возвращает диапазон адресов, в скоторый входит переданный ip, либо `null`, если не удалось получить результат.	
 ##Пример использования
 
-	\Bitrix\Main\Loader::includeModule('rover.geoip');
+	use \Bitrix\Main\Loader;
+	use \Rover\GeoIp\Location;
 
-	echo \Rover\GeoIp\Location::getCurIp(); // текущий ip
+	Loader::includeModule('rover.geoip');
 
-	$location = \Rover\GeoIp\Location::getInstance('5.255.255.88'); // yandex.ru
+	echo Location::getCurIp(); // текущий ip
+
+	$location = Location::getInstance('5.255.255.88'); // yandex.ru
 	
 	echo $location->getIp();        // 5.255.255.88
 	echo $location->getCity();      // Москва
