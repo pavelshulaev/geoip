@@ -79,7 +79,6 @@
 ####`public getInetnum()`
 Возвращает диапазон адресов, в скоторый входит переданный ip, либо `null`, если не удалось получить результат.	
 ##Пример использования
->>>>>>> 2aebef30ed007ea9deda691959991bdf8744c3c2
 
 	\Bitrix\Main\Loader::includeModule('rover.geoip');
 
