@@ -11,6 +11,9 @@ namespace Rover\GeoIp;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Localization\Loc;
+use Rover\GeoIp\Service\Base;
+use Rover\GeoIp\Service\FreeGeoIp;
+use Rover\GeoIp\Service\IpGeoBase;
 
 Loc::LoadMessages(__FILE__);
 
@@ -22,10 +25,6 @@ Loc::LoadMessages(__FILE__);
  */
 class Location
 {
-
-	const CHARSET__UTF_8        = 'utf-8';
-	const CHARSET__WINDOWS_1251 = 'windows-1251';
-
 	/**
 	 * instances
 	 * @var array
@@ -45,7 +44,7 @@ class Location
 	 */
 	private function __construct($ip, $charset)
 	{
-		if (!self::isValidIp($ip))
+		if (!Base::isValidIp($ip))
 			throw new ArgumentOutOfRangeException('ip');
 
 		$this->ip       = $ip;
@@ -58,8 +57,21 @@ class Location
 			return;
 		}
 
-		$data = $this->load();
-		$this->data = array_merge(['ip' => $this->ip], $data);;
+		try{
+			$data = IpGeoBase::get($this->ip, $this->charset);
+		} catch (\Exception $e){
+			$data = [];
+		}
+
+		if (!is_array($data))
+			$data = [];
+
+		// adding info, if needed
+		if (!isset($data['city']) || !strlen($data['city'])){
+			$data = array_merge($data, FreeGeoIp::get($this->ip, $this->charset));
+		}
+
+		$this->data = array_merge(['ip' => $this->ip], $data);
 
 		Cookie::set($this->data);
 	}
@@ -72,12 +84,12 @@ class Location
 	 * @throws ArgumentOutOfRangeException
 	 * @author Pavel Shulaev (http://rover-it.me)
 	 */
-	public static function getInstance($ip = null, $charset = self::CHARSET__UTF_8)
+	public static function getInstance($ip = null, $charset = Base::CHARSET__UTF_8)
 	{
 		if (is_null($ip))
 			$ip = self::getCurIp();
 
-		if (!self::isValidIp($ip))
+		if (!Base::isValidIp($ip))
 			throw new ArgumentOutOfRangeException('ip');
 
 		if (!isset(self::$instances[$ip]))
@@ -108,71 +120,13 @@ class Location
 			$ips[] = $server->get('HTTP_X_REAL_IP');
 
 		foreach($ips as $ip)
-			if(self::isValidIp($ip))
+			if(Base::isValidIp($ip))
 				return $ip;
 
 		return false;
 	}
 
-	/**
-	 * @param $ip
-	 * @return bool
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	protected static function isValidIp($ip)
-	{
-		return boolval(preg_match("#^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$#", $ip));
-	}
 
-	/**
-	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	protected function load()
-	{
-		// получаем данные по ip
-		$link = 'ipgeobase.ru:7020/geo?ip=' . $this->ip;
-
-		$ch = curl_init();
-
-		curl_setopt($ch, CURLOPT_URL, $link);
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-
-		$string = curl_exec($ch);
-
-		if($this->charset && ($this->charset != self::CHARSET__WINDOWS_1251))
-			$string = iconv(self::CHARSET__WINDOWS_1251, $this->charset, $string);
-
-		return $this->parse($string);
-	}
-
-	/**
-	 * @param $string
-	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	protected function parse($string)
-	{
-		$data   = [];
-		$pa     = [];
-
-		$pa['inetnum']  = '#<inetnum>(.*)</inetnum>#is';
-		$pa['country']  = '#<country>(.*)</country>#is';
-		$pa['city']     = '#<city>(.*)</city>#is';
-		$pa['region']   = '#<region>(.*)</region>#is';
-		$pa['district'] = '#<district>(.*)</district>#is';
-		$pa['lat']      = '#<lat>(.*)</lat>#is';
-		$pa['lng']      = '#<lng>(.*)</lng>#is';
-
-		foreach($pa as $key => $pattern)
-			if(preg_match($pattern, $string, $out))
-				$data[$key] = trim($out[1]);
-
-		return $data;
-	}
 
 	/**
 	 * @return array
@@ -217,8 +171,11 @@ class Location
 	 */
 	public function getCountryName($lang = LANGUAGE_ID)
 	{
-		return Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($this->getCountry()),
-			null, $lang);
+		if (!isset($this->data['country_name']))
+			$this->data['country_name'] = Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($this->getCountry()),
+				null, $lang);
+
+		return $this->data['country_name'];
 	}
 
 	/**
