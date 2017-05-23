@@ -24,7 +24,7 @@ abstract class Base
 	 */
 	public static function isValidIp($ip)
 	{
-		return boolval(preg_match("#^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$#", $ip));
+		return (bool)preg_match("#^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$#", $ip);
 	}
 
 	/**
