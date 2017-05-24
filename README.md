@@ -62,26 +62,59 @@
 #### `public getInetnum()`
 Возвращает диапазон адресов, в скоторый входит переданный ip, либо `null`, если не удалось получить результат.	
 ## Пример использования
+### для сайта в кодировке utf-8
 
-	use \Bitrix\Main\Loader;
-	use \Rover\GeoIp\Location;
+	use Bitrix\Main\Loader,
+        Rover\GeoIp\Location;
 
-	Loader::includeModule('rover.geoip');
+    if (Loader::includeModule('rover.geoip')){
+        try{
+            echo 'ваш ip: ' . Location::getCurIp() . '<br><br>'; // текущий ip
+            
+            $location = Location::getInstance('5.255.255.88'); // yandex.ru
+            
+            echo 'ip: '                 . $location->getIp() . '<br>';          // 5.255.255.88
+            echo 'город: '              . $location->getCity() . '<br>';        // Москва
+            echo 'код страны: '         . $location->getCountry() . '<br>';     // RU
+            echo 'название страны: '    . $location->getCountryName() . '<br>'; // Россия
+            echo 'регион: '             . $location->getRegion() . '<br>';      // Москва
+            echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
+            echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787
+            echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
+            echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     // 5.255.252.0 - 5.255.255.255
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
+	} else 
+        echo 'Модуль GeoIp Api не установлен';
+### для сайта в кодировке windows-1251
 
-	echo Location::getCurIp(); // текущий ip
-
-	$location = Location::getInstance('5.255.255.88'); // yandex.ru
+    use Bitrix\Main\Loader,
+        Rover\GeoIp\Location,
+        Rover\GeoIp\Service\Base;
 	
-	echo $location->getIp();        // 5.255.255.88
-	echo $location->getCity();      // Москва
-	echo $location->getCountry();   // RU
-	echo $location->getCountryName();  // Россия
-	echo $location->getRegion();    // Москва
-	echo $location->getDistrict();  // Центральный федеральный округ
-	echo $location->getLat();       // 55.755787
-	echo $location->getLng();       // 37.617634
-	echo $location->getInetnum();   // 5.255.252.0 - 5.255.255.255
-	
+    if (Loader::includeModule('rover.geoip')){
+        try{
+            echo 'ваш ip: ' . Location::getCurIp() . '<br><br>'; // текущий ip
+            
+            $location = Location::getInstance('5.255.255.88', Base::CHARSET__WINDOWS_1251); // yandex.ru
+            
+            echo 'ip: '                 . $location->getIp() . '<br>';          // 5.255.255.88
+            echo 'город: '              . $location->getCity() . '<br>';        // Москва
+            echo 'код страны: '         . $location->getCountry() . '<br>';     // RU
+            echo 'название страны: '    . $location->getCountryName() . '<br>'; // Россия
+            echo 'регион: '             . $location->getRegion() . '<br>';      // Москва
+            echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
+            echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787
+            echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
+            echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     // 5.255.252.0 - 5.255.255.255
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
+	} else 
+        echo 'Модуль GeoIp Api не установлен';
+		
+		
 ## Требования	
 Для работы «GeoIp Api» необходим установленный на хостинге php версии 5.4 или выше и модуль CURL.
 ## Контакты

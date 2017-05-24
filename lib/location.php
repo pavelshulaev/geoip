@@ -170,9 +170,16 @@ class Location
 	 */
 	public function getCountryName($lang = LANGUAGE_ID)
 	{
-		if (!isset($this->data['country_name']))
-			$this->data['country_name'] = Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($this->getCountry()),
-				null, $lang);
+		if (!isset($this->data['country_name'])){
+			$country = Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($this->getCountry()), null, $lang);
+			if ($this->charset == Base::CHARSET__WINDOWS_1251)
+				$country = iconv(Base::CHARSET__UTF_8, Base::CHARSET__WINDOWS_1251, $country);
+
+			$this->data['country_name'] = $country;
+		}
+
+
+
 
 		return $this->data['country_name'];
 	}
