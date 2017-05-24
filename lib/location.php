@@ -67,9 +67,8 @@ class Location
 			$data = [];
 
 		// adding info, if needed
-		if (!isset($data['city']) || !strlen($data['city'])){
+		if (!isset($data['city']) || !strlen($data['city']))
 			$data = array_merge($data, FreeGeoIp::get($this->ip, $this->charset));
-		}
 
 		$this->data = array_merge(['ip' => $this->ip], $data);
 
