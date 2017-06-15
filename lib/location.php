@@ -178,11 +178,23 @@ class Location
 			$this->data['country_name'] = $country;
 		}
 
-
-
-
 		return $this->data['country_name'];
 	}
+
+    /**
+     * @return null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getCountryId()
+    {
+        $countries  = GetCountryArray();
+        $key        = array_search($this->getCountryName(), $countries["reference"]);
+
+        if ($key)
+            return $countries["reference_id"][$key];
+
+        return null;
+    }
 
 	/**
 	 * @return mixed
