@@ -125,8 +125,6 @@ class Location
 		return false;
 	}
 
-
-
 	/**
 	 * @return array
 	 * @author Pavel Shulaev (http://rover-it.me)
