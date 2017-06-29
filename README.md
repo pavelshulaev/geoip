@@ -79,6 +79,7 @@
             echo 'город: '              . $location->getCity() . '<br>';        // Москва
             echo 'код страны: '         . $location->getCountry() . '<br>';     // RU
             echo 'название страны: '    . $location->getCountryName() . '<br>'; // Россия
+            echo 'код страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 1
             echo 'регион: '             . $location->getRegion() . '<br>';      // Москва
             echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
             echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787

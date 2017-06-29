@@ -25,6 +25,17 @@ Loc::LoadMessages(__FILE__);
  */
 class Location
 {
+
+    const FIELD__IP         = 'ip';
+    const FIELD__CITY       = 'city';
+    const FIELD__REGION     = 'region';
+    const FIELD__COUNTRY    = 'country';
+    const FIELD__COUNTRY_NAME   = 'country_name';
+    const FIELD__COUNTRY_ID = 'country_id';
+    const FIELD__DISTRICT   = 'district';
+    const FIELD__LAT        = 'lat';
+    const FIELD__LNG        = 'lng';
+    const FIELD__INETNUM    = 'inetnum';
 	/**
 	 * instances
 	 * @var array
@@ -36,6 +47,44 @@ class Location
 	 * @var array
 	 */
 	protected $data = [];
+
+    /**
+     * @var bool
+     */
+	protected $requestFlag = false;
+
+    /**
+     * Location constructor.
+     *
+     * @param $ip
+     * @param $charset
+     * @throws ArgumentOutOfRangeException
+     */
+    private function __construct($ip, $charset)
+    {
+        if (!Base::isValidIp($ip))
+            throw new ArgumentOutOfRangeException('ip');
+
+        $this->ip       = $ip;
+        $this->charset  = $charset;
+    }
+
+    /**
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    protected function request()
+    {
+        // info in cookie
+        if (Cookie::checkIp($this->ip))
+        {
+            $this->data = Cookie::get();
+            return;
+        }
+
+        $this->reload();
+
+        Cookie::set($this->data);
+    }
 
     /**
      * @param null $ip
@@ -69,37 +118,44 @@ class Location
 
             }
 
-       $this->data = array_merge(['ip' => $ip], $data);
+        $data = $this->addCountryData($data);
 
-       return $this;
+        $this->data = array_merge(['ip' => $ip], $data);
+
+        return $this;
     }
 
     /**
-     * Location constructor.
-     *
-     * @param $ip
-     * @param $charset
-     * @throws ArgumentOutOfRangeException
+     * @param $data
+     * @return mixed
+     * @author Pavel Shulaev (https://rover-it.me)
      */
-	private function __construct($ip, $charset)
-	{
-		if (!Base::isValidIp($ip))
-			throw new ArgumentOutOfRangeException('ip');
+    protected function addCountryData($data)
+    {
+        $data[self::FIELD__COUNTRY_NAME]    = null;
+        $data[self::FIELD__COUNTRY_ID]      = null;
 
-		$this->ip       = $ip;
-		$this->charset  = $charset;
+        // add country name
+        $countryName = Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($data[self::FIELD__COUNTRY]));
+        if (!$countryName)
+            return $data;
 
-		// info in cookie
-		if (Cookie::checkIp($this->ip))
-		{
-			$this->data = Cookie::get();
-			return;
-		}
+        if ($this->charset != Base::CHARSET__UTF_8)
+            $countryName = iconv(Base::CHARSET__UTF_8, $this->charset, $countryName);
 
-        $this->reload();
+        $data[self::FIELD__COUNTRY_NAME] = $countryName;
 
-		Cookie::set($this->data);
-	}
+        // add country id
+        $countries  = GetCountryArray();
+        $key        = array_search($countryName, $countries["reference"]);
+
+        if (!$key)
+            return $data;
+
+        $data[self::FIELD__COUNTRY_ID] = $countries["reference_id"][$key];
+
+        return $data;
+    }
 
 	/**
 	 * @param null   $ip
@@ -150,13 +206,28 @@ class Location
 		return false;
 	}
 
-	/**
-	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	public function getData()
+    /**
+     * @param null $field
+     * @return array|mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getData($field = null)
 	{
-		return $this->data;
+	    // first request
+	    if (!$this->requestFlag){
+            $this->request();
+            $this->requestFlag = true;
+        }
+
+        $field = trim($field);
+
+	    if (!strlen($field))
+	        return $this->data;
+
+	    if (isset($this->data[$field]))
+            return $this->data[$field];
+
+		return null;
 	}
 
 	/**
@@ -165,7 +236,7 @@ class Location
 	 */
 	public function getIp()
 	{
-		return $this->data['ip'];
+		return $this->getData(self::FIELD__IP);
 	}
 
 	/**
@@ -174,7 +245,7 @@ class Location
 	 */
 	public function getCity()
 	{
-		return $this->data['city'];
+		return $this->getData(self::FIELD__CITY);
 	}
 
 	/**
@@ -183,25 +254,16 @@ class Location
 	 */
 	public function getCountry()
 	{
-		return $this->data['country'];
+		return $this->getData(self::FIELD__COUNTRY);
 	}
 
-	/**
-	 * @param string $lang
-	 * @return string
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	public function getCountryName($lang = LANGUAGE_ID)
+    /**
+     * @return array|mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getCountryName()
 	{
-		if (!isset($this->data['country_name'])){
-			$country = Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($this->getCountry()), null, $lang);
-			if ($this->charset == Base::CHARSET__WINDOWS_1251)
-				$country = iconv(Base::CHARSET__UTF_8, Base::CHARSET__WINDOWS_1251, $country);
-
-			$this->data['country_name'] = $country;
-		}
-
-		return $this->data['country_name'];
+	    return $this->getData(self::FIELD__COUNTRY_NAME);
 	}
 
     /**
@@ -210,13 +272,7 @@ class Location
      */
 	public function getCountryId()
     {
-        $countries  = GetCountryArray();
-        $key        = array_search($this->getCountryName(), $countries["reference"]);
-
-        if ($key)
-            return $countries["reference_id"][$key];
-
-        return null;
+        return $this->getData(self::FIELD__COUNTRY_ID);
     }
 
 	/**
@@ -225,7 +281,7 @@ class Location
 	 */
 	public function getRegion()
 	{
-		return $this->data['region'];
+		return $this->getData(self::FIELD__REGION);
 	}
 
 	/**
@@ -234,7 +290,7 @@ class Location
 	 */
 	public function getDistrict()
 	{
-		return $this->data['district'];
+		return $this->getData(self::FIELD__DISTRICT);
 	}
 
 	/**
@@ -243,7 +299,7 @@ class Location
 	 */
 	public function getLat()
 	{
-		return $this->data['lat'];
+		return $this->getData(self::FIELD__LAT);
 	}
 
 	/**
@@ -252,7 +308,7 @@ class Location
 	 */
 	public function getLng()
 	{
-		return $this->data['lng'];
+		return $this->getData(self::FIELD__LNG);
 	}
 
 	/**
@@ -261,6 +317,6 @@ class Location
 	 */
 	public function getInetnum()
 	{
-		return $this->data['inetnum'];
+		return $this->getData(self::FIELD__INETNUM);
 	}
 }
