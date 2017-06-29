@@ -37,11 +37,50 @@ class Location
 	 */
 	protected $data = [];
 
-	/**
-	 * @param $ip
-	 * @param $charset
-	 * @throws ArgumentOutOfRangeException
-	 */
+    /**
+     * @param null $ip
+     * @return $this
+     * @throws ArgumentOutOfRangeException
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function reload($ip = null)
+    {
+        $ip = trim($ip);
+        if (!$ip)
+            $ip = $this->ip;
+
+        if (!Base::isValidIp($ip))
+            throw new ArgumentOutOfRangeException('ip');
+
+        try{
+            $data = IpGeoBase::get($ip, $this->charset);
+        } catch (\Exception $e){
+            $data = [];
+        }
+
+        if (!is_array($data))
+            $data = [];
+
+        // adding info, if needed
+        if (!isset($data['city']) || !strlen($data['city']))
+            try{
+                $data = array_merge($data, FreeGeoIp::get($ip, $this->charset));
+            } catch (\Exception $e) {
+
+            }
+
+       $this->data = array_merge(['ip' => $ip], $data);
+
+       return $this;
+    }
+
+    /**
+     * Location constructor.
+     *
+     * @param $ip
+     * @param $charset
+     * @throws ArgumentOutOfRangeException
+     */
 	private function __construct($ip, $charset)
 	{
 		if (!Base::isValidIp($ip))
@@ -57,24 +96,10 @@ class Location
 			return;
 		}
 
-		try{
-			$data = IpGeoBase::get($this->ip, $this->charset);
-		} catch (\Exception $e){
-			$data = [];
-		}
-
-		if (!is_array($data))
-			$data = [];
-
-		// adding info, if needed
-		if (!isset($data['city']) || !strlen($data['city']))
-			$data = array_merge($data, FreeGeoIp::get($this->ip, $this->charset));
-
-		$this->data = array_merge(['ip' => $this->ip], $data);
+        $this->reload();
 
 		Cookie::set($this->data);
 	}
-
 
 	/**
 	 * @param null   $ip
@@ -124,8 +149,6 @@ class Location
 
 		return false;
 	}
-
-
 
 	/**
 	 * @return array
