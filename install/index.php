@@ -2,9 +2,15 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Application;
 
 Loc::LoadMessages(__FILE__);
 
+/**
+ * Class rover_geoip
+ *
+ * @author Pavel Shulaev (https://rover-it.me)
+ */
 class rover_geoip extends CModule
 {
     var $MODULE_ID	= "rover.geoip";
@@ -85,6 +91,8 @@ class rover_geoip extends CModule
         if (!function_exists('curl_init'))
             $errors[] = Loc::getMessage('rover-gi__no-curl');
 
+        $this->copyFiles();
+
         if (empty($errors))
             ModuleManager::registerModule($this->MODULE_ID);
 
@@ -99,10 +107,33 @@ class rover_geoip extends CModule
 	{
         global $APPLICATION, $errors;
 
+        $this->removeFiles();
+
         if (empty($errors))
 	        ModuleManager::unRegisterModule($this->MODULE_ID);
 
         $APPLICATION->IncludeAdminFile(Loc::getMessage("rover-gi__uninstall_title"),
             __DIR__ . "/unMessage.php");
 	}
+
+    /**
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	private function copyFiles()
+    {
+        global $error;
+
+        $documentRoot = Application::getDocumentRoot();
+
+        if (!CopyDirFiles(__DIR__ . '/components/', $documentRoot . '/bitrix/components/', true, true))
+            $error[] = Loc::getMessage('rover-gi__copy_files_error');
+    }
+
+    /**
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    private function removeFiles()
+    {
+        DeleteDirFilesEx('/bitrix/components/rover/geoip.user.location');
+    }
 }
