@@ -135,24 +135,13 @@ class Location
         $data[self::FIELD__COUNTRY_NAME]    = null;
         $data[self::FIELD__COUNTRY_ID]      = null;
 
-        // add country name
-        $countryName = Loc::getMessage('ROVER_GI_COUNTRY_' . strtoupper($data[self::FIELD__COUNTRY]));
-        if (!$countryName)
+        if (!$data[self::FIELD__COUNTRY])
             return $data;
 
-        if ($this->charset != Base::CHARSET__UTF_8)
-            $countryName = iconv(Base::CHARSET__UTF_8, $this->charset, $countryName);
+        $data[self::FIELD__COUNTRY_ID] = GetCountryIdByCode(strtoupper($data[self::FIELD__COUNTRY]));
 
-        $data[self::FIELD__COUNTRY_NAME] = $countryName;
-
-        // add country id
-        $countries  = GetCountryArray();
-        $key        = array_search($countryName, $countries["reference"]);
-
-        if (!$key)
-            return $data;
-
-        $data[self::FIELD__COUNTRY_ID] = $countries["reference_id"][$key];
+        if ($data[self::FIELD__COUNTRY_ID])
+            $data[self::FIELD__COUNTRY_NAME] = GetCountryByID($data[self::FIELD__COUNTRY_ID]);
 
         return $data;
     }
