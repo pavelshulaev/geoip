@@ -101,7 +101,7 @@
             echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
             echo 'диапазон адресов: '   . $location->getInetnum() . '<br><br>';     // 5.255.252.0 - 5.255.255.255
     
-            $location->reload('173.194.222.94');
+            $location->reload('173.194.222.94'); // google.ru
     
             echo 'ip: '                 . $location->getIp() . '<br>';          // 173.194.222.94
             echo 'город: '              . $location->getCity() . '<br>';        // Mountain View
