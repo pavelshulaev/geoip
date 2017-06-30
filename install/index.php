@@ -121,12 +121,12 @@ class rover_geoip extends CModule
      */
 	private function copyFiles()
     {
-        global $error;
+        global $errors;
 
         $documentRoot = Application::getDocumentRoot();
 
         if (!CopyDirFiles(__DIR__ . '/components/', $documentRoot . '/bitrix/components/', true, true))
-            $error[] = Loc::getMessage('rover-gi__copy_files_error');
+            $errors[] = Loc::getMessage('rover-gi__copy_files_error');
     }
 
     /**
