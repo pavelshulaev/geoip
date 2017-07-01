@@ -153,6 +153,6 @@
 По всем вопросам вы можете связаться со мной по email: rover.webdev@gmail.com, либо через форму на сайте http://rover-it.me.
 
 ## Пожертвования
-Если решение оказалось вам полезным, вы можете сделать пожертование
+Если решение оказалось вам полезным, вы можете оставить пожертование
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZJHEBS963JZUY)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=V9Y7ZLDB5X8Z6)
