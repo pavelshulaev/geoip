@@ -151,3 +151,13 @@
 Для работы «GeoIp Api» необходим установленный на хостинге php версии 5.4 или выше и модуль CURL.
 ## Контакты
 По всем вопросам вы можете связаться со мной по email: rover.webdev@gmail.com, либо через форму на сайте http://rover-it.me.
+
+## Пожертвования
+Если решение оказалось вам полезным, вы можете сделать пожертование
+
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+<input type="hidden" name="cmd" value="_s-xclick">
+<input type="hidden" name="hosted_button_id" value="9ATKYN9FL695L">
+<input type="image" src="https://www.paypalobjects.com/ru_RU/RU/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal — более безопасный и легкий способ оплаты через Интернет!">
+<img alt="" border="0" src="https://www.paypalobjects.com/ru_RU/i/scr/pixel.gif" width="1" height="1">
+</form>
