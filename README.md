@@ -30,10 +30,10 @@
 
 ## Api
 ### `\Rover\GeoIp\Location`
-#### `public static \Rover\GeoIp\Location::getInstance($ip = null, $charset = self::CHARSET__UTF_8)`
+#### `public static \Rover\GeoIp\Location::getInstance($ip = null, $charset = self::CHARSET__AUTO)`
 Метод возвращает объект `\Rover\GeoIp\Location` для переднного ip-адреса. Если ip-адрес не передан, то объект возвращается для текуего ip пользователя.
 
-Вторым параметром можно передать кодировку возвращаемых данных. Если она не передана, то по умолчанию берется utf-8.
+Вторым параметром можно передать кодировку возвращаемых данных. Если она не передана, то по умолчанию берется кодировка сайта.
 #### `public reload($ip = null)`
 Метод позволяет загрузить данные напрямую из сервисов геопозиционирования, минуя кеш.
 
@@ -79,7 +79,6 @@
 #### `public getInetnum()`
 Возвращает диапазон адресов, в который входит переданный ip.	
 ## Пример использования
-### для сайта в кодировке utf-8
 
 	use Bitrix\Main\Loader,
         Rover\GeoIp\Location;
@@ -119,19 +118,6 @@
         }
 	} else 
         echo 'Модуль GeoIp Api не установлен';
-### для сайта в кодировке windows-1251
-
-    use Bitrix\Main\Loader,
-        Rover\GeoIp\Location,
-        Rover\GeoIp\Service\Base;
-	
-    if (Loader::includeModule('rover.geoip')){
-        try{
-            echo 'ваш ip: ' . Location::getCurIp() . '<br><br>'; // текущий ip
-            
-            $location = Location::getInstance('5.255.255.88', Base::CHARSET__WINDOWS_1251); // yandex.ru
-            
-            -//-
 		
 ## Компоненты
 ### Указатель местоположения пользователей (geoip.user.location)
