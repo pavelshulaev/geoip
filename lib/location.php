@@ -13,6 +13,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Localization\Loc;
 use Rover\GeoIp\Service\Base;
 use Rover\GeoIp\Service\FreeGeoIp;
+use Rover\GeoIp\Service\Ip;
 use Rover\GeoIp\Service\IpGeoBase;
 
 Loc::LoadMessages(__FILE__);
@@ -62,7 +63,7 @@ class Location
      */
     private function __construct($ip, $charset)
     {
-        if (!Base::isValidIp($ip))
+        if (!Ip::isValid($ip))
             throw new ArgumentOutOfRangeException('ip');
 
         $this->ip       = $ip;
@@ -98,27 +99,27 @@ class Location
         if (!$ip)
             $ip = $this->ip;
 
-        if (!Base::isValidIp($ip))
+        if (!Ip::isValid($ip))
             throw new ArgumentOutOfRangeException('ip');
 
-        try{
-            $data = IpGeoBase::get($ip, $this->charset);
-        } catch (\Exception $e){
-            $data = [];
-        }
+        $data = [];
 
-        if (!is_array($data))
-            $data = [];
-
-        // adding info, if needed
-        if (!isset($data['city']) || !strlen($data['city']))
+        if (Ip::isV4($ip)) {
             try{
-                $data = array_merge($data, FreeGeoIp::get($ip, $this->charset));
-            } catch (\Exception $e) {
+                $data = IpGeoBase::get($ip, $this->charset);
+                if (!is_array($data))
+                    $data = [];
 
-            }
+                // adding info, if needed
+                if (!isset($data['city']) || !strlen($data['city']))
+                    try{
+                        $data = array_merge($data, FreeGeoIp::get($ip, $this->charset));
+                    } catch (\Exception $e) { }
 
-        $data = $this->addCountryData($data);
+                $data = $this->addCountryData($data);
+
+            } catch (\Exception $e) { }
+        }
 
         $this->data = array_merge(['ip' => $ip], $data);
 
@@ -153,46 +154,21 @@ class Location
 	 * @throws ArgumentOutOfRangeException
 	 * @author Pavel Shulaev (http://rover-it.me)
 	 */
-	public static function getInstance($ip = null, $charset = Base::CHARSET__UTF_8)
+	public static function getInstance($ip = null, $charset = Base::CHARSET__AUTO)
 	{
 		if (is_null($ip))
-			$ip = self::getCurIp();
+			$ip = Ip::getCur();
 
-		if (!Base::isValidIp($ip))
+		if (!Ip::isValid($ip))
 			throw new ArgumentOutOfRangeException('ip');
+
+		if ($charset == Base::CHARSET__AUTO)
+		    $charset = LANG_CHARSET;
 
 		if (!isset(self::$instances[$ip]))
 			self::$instances[$ip] = new self($ip, $charset);
 
 		return self::$instances[$ip];
-	}
-
-	/**
-	 * @return bool
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	public static function getCurIp()
-	{
-		$ips = [];
-		$server = Application::getInstance()->getContext()->getServer();
-
-		if ($server->get('HTTP_X_FORWARDED_FOR'))
-			$ips[] = trim(strtok($server->get('HTTP_X_FORWARDED_FOR'), ','));
-
-		if ($server->get('HTTP_CLIENT_IP'))
-			$ips[] = $server->get('HTTP_CLIENT_IP');
-
-		if ($server->get('REMOTE_ADDR'))
-			$ips[] = $server->get('REMOTE_ADDR');
-
-		if ($server->get('HTTP_X_REAL_IP'))
-			$ips[] = $server->get('HTTP_X_REAL_IP');
-
-		foreach($ips as $ip)
-			if(Base::isValidIp($ip))
-				return $ip;
-
-		return false;
 	}
 
     /**
@@ -308,4 +284,13 @@ class Location
 	{
 		return $this->getData(self::FIELD__INETNUM);
 	}
+
+    /**
+     * @return bool
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public static function getCurIp()
+    {
+        return Ip::getCur();
+    }
 }

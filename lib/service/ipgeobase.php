@@ -1,7 +1,7 @@
 <?php
 namespace Rover\GeoIp\Service;
-use Bitrix\Main\ArgumentOutOfRangeException;
 
+use Bitrix\Main\ArgumentOutOfRangeException;
 /**
  * Created by PhpStorm.
  * User: lenovo
@@ -21,7 +21,7 @@ class IpGeoBase extends Base
 	 */
 	public static function get($ip, $charset = self::CHARSET__UTF_8)
 	{
-		if (!self::isValidIp($ip))
+		if (!Ip::isV4($ip))
 			throw new ArgumentOutOfRangeException('ip');
 
 		$string = self::load('ipgeobase.ru:7020/geo?ip=' . $ip, $charset);

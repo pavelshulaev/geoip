@@ -12,20 +12,11 @@ use Bitrix\Main\ArgumentOutOfRangeException;
  */
 abstract class Base
 {
+    const CHARSET__AUTO         = 'auto';
 	const CHARSET__UTF_8        = 'utf-8';
 	const CHARSET__WINDOWS_1251 = 'windows-1251';
 
 	abstract static function get($ip, $charset = null);
-
-	/**
-	 * @param $ip
-	 * @return bool
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	public static function isValidIp($ip)
-	{
-		return (bool)preg_match("#^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$#", $ip);
-	}
 
 	/**
 	 * @param      $link

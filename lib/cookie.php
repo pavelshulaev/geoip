@@ -13,16 +13,21 @@ namespace Rover\GeoIp;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Cookie as BxCookie;
 
+/**
+ * Class Cookie
+ *
+ * @package Rover\GeoIp
+ * @author  Pavel Shulaev (https://rover-it.me)
+ */
 class Cookie
 {
 	const LIFETIME  = 604800; // 1 week
 	const NAME      = 'rover_geoip';
 
-	/**
-	 * @param $data
-	 * @return bool
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
+    /**
+     * @param $data
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
 	public static function set($data)
 	{
 		$cookie = new BxCookie(self::NAME, serialize($data), time() + self::LIFETIME);

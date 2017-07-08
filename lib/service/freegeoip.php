@@ -29,7 +29,7 @@ class FreeGeoIp extends Base
 	 */
 	public static function get($ip, $charset = self::CHARSET__UTF_8)
 	{
-		if (!self::isValidIp($ip))
+		if (!Ip::isV4($ip))
 			throw new ArgumentOutOfRangeException('ip');
 
 		$string = self::load('freegeoip.net/xml/' . $ip, $charset);
