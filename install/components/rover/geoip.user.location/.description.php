@@ -17,7 +17,7 @@ $arComponentDescription = array(
 		"ID" => "rover",
 		"NAME" => GetMessage("ROVER_SL_SERVICE"),
 		"CHILD" => array(
-			"ID" => "service",
+			"ID" => "geoip",
 			"NAME" => GetMessage("ROVER_SL_SERVICE_CHILD")
 		)
 	),
