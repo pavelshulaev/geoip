@@ -24,7 +24,7 @@ class IpGeoBase extends Base
 		if (!Ip::isV4($ip))
 			throw new ArgumentOutOfRangeException('ip');
 
-		$string = self::load('ipgeobase.ru:7020/geo?ip=' . $ip, $charset);
+		$string = self::load('http://ipgeobase.ru:7020/geo?ip=' . $ip, $charset);
 
 		return self::parse($string);
 	}
