@@ -8,7 +8,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
  * Date: 27.02.2017
  * Time: 14:27
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 abstract class Base
 {
@@ -23,7 +23,7 @@ abstract class Base
 	 * @param null $charset
 	 * @return mixed|string
 	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public static function load($link, $charset = null)
 	{

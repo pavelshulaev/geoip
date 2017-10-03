@@ -5,7 +5,7 @@
  * Date: 03.01.2016
  * Time: 22:56
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 
 namespace Rover\GeoIp;
@@ -40,7 +40,7 @@ class Cookie
 
 	/**
 	 * @return mixed|null
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public static function get()
 	{
@@ -55,7 +55,7 @@ class Cookie
 	/**
 	 * @param $ip
 	 * @return bool
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public static function checkIp($ip)
 	{

@@ -8,7 +8,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
  * Date: 27.02.2017
  * Time: 14:28
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 class IpGeoBase extends Base
 {
@@ -17,7 +17,7 @@ class IpGeoBase extends Base
 	 * @param null|string $charset
 	 * @return array
 	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public static function get($ip, $charset = self::CHARSET__UTF_8)
 	{
@@ -32,7 +32,7 @@ class IpGeoBase extends Base
 	/**
 	 * @param $string
 	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	protected static function parse($string)
 	{

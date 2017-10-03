@@ -62,22 +62,34 @@
 	
 #### `public getCity()`
 Возвращает название города.	
+
 #### `public getCountry()`
 Возвращает буквенный код страны.	
+
 #### `public getCountryName()`
 Возвращает название страны на текущем языке сайта.
+
 #### `public getCountryId()`
 Возвращает id страны в Битриксе.
+
 #### `public getRegion()`
 Возвращает название региона.	
+
 #### `public getDistrict()`
 Возвращает название района.
+
 #### `public getLat()`
 Возвращает широту.	
+
 #### `public getLng()`
 Возвращает долготу.					
+
 #### `public getInetnum()`
-Возвращает диапазон адресов, в который входит переданный ip.	
+Возвращает диапазон адресов, в который входит переданный ip.					
+
+#### `public getService()`
+Возвращает название geoip-сервиса, с помощью которого были получены данные
+	
 ## Пример использования
 
 	use Bitrix\Main\Loader,
@@ -98,8 +110,9 @@
             echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
             echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787
             echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
-            echo 'диапазон адресов: '   . $location->getInetnum() . '<br><br>';     // 5.255.252.0 - 5.255.255.255
-    
+            echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     // 5.255.252.0 - 5.255.255.255
+            echo 'сервис: '             . $location->getService() . '<br><br>';     // IpGeoBase
+            
             $location->reload('173.194.222.94'); // google.ru
     
             echo 'ip: '                 . $location->getIp() . '<br>';          // 173.194.222.94
@@ -112,6 +125,7 @@
             echo 'широта: '             . $location->getLat() . '<br>';         // 37.4192
             echo 'долгота: '            . $location->getLng() . '<br>';         // -122.0574
             echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     //
+            echo 'сервис: '             . $location->getService() . '<br>';     // FreeGeoIp
             
         } catch (\Exception $e) {
             echo $e->getMessage();
@@ -136,7 +150,7 @@
 ## Требования	
 Для работы «GeoIp Api» необходим установленный на хостинге php версии 5.4 или выше и модуль CURL.
 ## Контакты
-По всем вопросам вы можете связаться со мной по email: rover.webdev@gmail.com, либо через форму на сайте http://rover-it.me.
+По всем вопросам вы можете связаться со мной по email: rover.webdev@gmail.com, либо через форму на сайте https://rover-it.me.
 
 ## Пожертвования
 Если решение оказалось вам полезным, вы можете оставить пожертование

@@ -6,9 +6,8 @@ namespace Rover\GeoIp;
  * Date: 03.01.2016
  * Time: 21:36
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Localization\Loc;
 use Rover\GeoIp\Service\Base;
@@ -26,7 +25,6 @@ Loc::LoadMessages(__FILE__);
  */
 class Location
 {
-
     const FIELD__IP         = 'ip';
     const FIELD__CITY       = 'city';
     const FIELD__REGION     = 'region';
@@ -53,6 +51,21 @@ class Location
      * @var bool
      */
 	protected $requestFlag = false;
+
+    /**
+     * @var string
+     */
+	protected $ip;
+
+    /**
+     * @var string
+     */
+	protected $charset;
+
+    /**
+     * @var string
+     */
+	protected $service;
 
     /**
      * Location constructor.
@@ -107,14 +120,19 @@ class Location
         if (Ip::isV4($ip)) {
             try{
                 $data = IpGeoBase::get($ip, $this->charset);
+
                 if (!is_array($data))
                     $data = [];
 
                 // adding info, if needed
-                if (!isset($data['city']) || !strlen($data['city']))
+                if (!isset($data['city']) || !strlen($data['city'])) {
                     try{
                         $data = array_merge($data, FreeGeoIp::get($ip, $this->charset));
                     } catch (\Exception $e) { }
+                    $this->service  = 'FreeGeoIp';
+                } else {
+                    $this->service  = 'IpGeoBase';
+                }
 
                 $data = $this->addCountryData($data);
 
@@ -152,7 +170,7 @@ class Location
 	 * @param string $charset
 	 * @return Location
 	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public static function getInstance($ip = null, $charset = Base::CHARSET__AUTO)
 	{
@@ -197,7 +215,7 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getIp()
 	{
@@ -206,7 +224,7 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getCity()
 	{
@@ -215,7 +233,7 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getCountry()
 	{
@@ -242,7 +260,7 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getRegion()
 	{
@@ -251,7 +269,7 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getDistrict()
 	{
@@ -260,7 +278,7 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getLat()
 	{
@@ -269,7 +287,7 @@ class Location
 
 	/**
 	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getLng()
 	{
@@ -278,12 +296,21 @@ class Location
 
 	/**
 	 * @return mixed
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public function getInetnum()
 	{
 		return $this->getData(self::FIELD__INETNUM);
 	}
+
+    /**
+     * @return string
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getService()
+    {
+        return $this->service;
+    }
 
     /**
      * @return bool

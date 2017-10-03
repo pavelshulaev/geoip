@@ -22,7 +22,7 @@ class Ip
 {
     /**
      * @return bool
-     * @author Pavel Shulaev (http://rover-it.me)
+     * @author Pavel Shulaev (https://rover-it.me)
      */
     public static function getCur()
     {

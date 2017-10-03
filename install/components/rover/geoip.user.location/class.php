@@ -18,7 +18,7 @@ use \Rover\GeoIp\Location;
 /**
  * Class RoverSlider
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 class GeoIpUserLocation extends CBitrixComponent
 {

@@ -5,7 +5,7 @@
  * Date: 27.02.2017
  * Time: 14:43
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 
 namespace Rover\GeoIp\Service;
@@ -16,7 +16,7 @@ use Bitrix\Main\ArgumentOutOfRangeException;
  * Class FreeGeoIp
  *
  * @package Rover\GeoIp\Service
- * @author  Pavel Shulaev (http://rover-it.me)
+ * @author  Pavel Shulaev (https://rover-it.me)
  */
 class FreeGeoIp extends Base
 {
@@ -25,7 +25,7 @@ class FreeGeoIp extends Base
 	 * @param null|string $charset
 	 * @return array
 	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	public static function get($ip, $charset = self::CHARSET__UTF_8)
 	{
@@ -40,7 +40,7 @@ class FreeGeoIp extends Base
 	/**
 	 * @param $string
 	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	protected static function parse($string)
 	{

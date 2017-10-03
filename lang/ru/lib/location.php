@@ -5,7 +5,7 @@
  * Date: 03.01.2016
  * Time: 22:03
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 $MESS['ROVER_GI_COUNTRY_AC'] = 'остров Вознесения';
 $MESS['ROVER_GI_COUNTRY_AD'] = 'Андорра';
