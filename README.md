@@ -13,13 +13,13 @@
 
 ### В местоположение входят
 
-* название город;
+* название города;
 * название страны на языке сайта;
 * iso-код страны
-* ид страны в CMS 1С Битрикс
+* id страны в CMS 1С Битрикс
 * название региона;
 * iso-код региона;
-* название район;
+* название района;
 * ширина и долгота;
 * диапазон ip-адресов.
 
@@ -149,7 +149,7 @@
             echo 'название страны: '    . $location->getCountryName() . '<br>'; // США
             echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 122
             echo 'регион: '             . $location->getRegionName() . '<br>';      // Калифорния
-            echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      // Калифорния
+            echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      //
             echo 'округ: '              . $location->getDistrict() . '<br>';    // US-CA
             echo 'широта: '             . $location->getLat() . '<br>';         // 37.38605
             echo 'долгота: '            . $location->getLng() . '<br>';         // -122.08385
