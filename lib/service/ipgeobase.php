@@ -60,8 +60,6 @@ class IpGeoBase extends Service
 			if(preg_match($pattern, $string, $out))
 				$data[$key] = trim($out[1]);
 
-        $data[self::FIELD__REGION_CODE] = 'n/a';
-
 		return $data;
 	}
 }

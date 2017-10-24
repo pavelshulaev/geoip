@@ -129,11 +129,12 @@
             $location = Location::getInstance('5.255.255.88'); // yandex.ru
             
             echo 'ip: '                 . $location->getIp() . '<br>';          // 5.255.255.88
-            echo 'город: '              . $location->getCity() . '<br>';        // Москва
-            echo 'код страны: '         . $location->getCountry() . '<br>';     // RU
+            echo 'город: '              . $location->getCityName() . '<br>';        // Москва
+            echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // RU
             echo 'название страны: '    . $location->getCountryName() . '<br>'; // Россия
-            echo 'код страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 1
-            echo 'регион: '             . $location->getRegion() . '<br>';      // Москва
+            echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 1
+            echo 'регион: '             . $location->getRegionName() . '<br>';      // Москва
+            echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      // 
             echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
             echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787
             echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
@@ -143,16 +144,17 @@
             $location->reload('173.194.222.94'); // google.ru
     
             echo 'ip: '                 . $location->getIp() . '<br>';          // 173.194.222.94
-            echo 'город: '              . $location->getCity() . '<br>';        // Mountain View
-            echo 'код страны: '         . $location->getCountry() . '<br>';     // US
+            echo 'город: '              . $location->getCityName() . '<br>';        // Маунтин-Вью
+            echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // US
             echo 'название страны: '    . $location->getCountryName() . '<br>'; // США
-            echo 'код страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 122
-            echo 'регион: '             . $location->getRegion() . '<br>';      // California
-            echo 'округ: '              . $location->getDistrict() . '<br>';    //
-            echo 'широта: '             . $location->getLat() . '<br>';         // 37.4192
-            echo 'долгота: '            . $location->getLng() . '<br>';         // -122.0574
+            echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 122
+            echo 'регион: '             . $location->getRegionName() . '<br>';      // Калифорния
+            echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      // Калифорния
+            echo 'округ: '              . $location->getDistrict() . '<br>';    // US-CA
+            echo 'широта: '             . $location->getLat() . '<br>';         // 37.38605
+            echo 'долгота: '            . $location->getLng() . '<br>';         // -122.08385
             echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     //
-            echo 'сервис: '             . $location->getService() . '<br>';     // FreeGeoIp
+            echo 'сервис: '             . $location->getService() . '<br>';     // Sypex
             
         } catch (\Exception $e) {
             echo $e->getMessage();
