@@ -43,7 +43,7 @@
 ## Api
 ### `\Rover\GeoIp\Location`
 #### `public static \Rover\GeoIp\Location::getInstance($ip = null, $charset = self::CHARSET__AUTO, $service = '')`
-Метод возвращает объект `\Rover\GeoIp\Location` для переднного ip-адреса. Если ip-адрес не передан, то объект возвращается для текущего ip.
+Возвращает объект `\Rover\GeoIp\Location` для переднного ip-адреса. Если ip-адрес не передан, то объект используется текущий ip.
 
 Вторым параметром можно передать кодировку возвращаемых данных. Если она не передана, то по умолчанию берется кодировка сайта.
 
@@ -62,18 +62,18 @@
 	[
 		'ip'            => 'xxx.xxx.xxx.xxx',
 		'inetnum'       => '...',
-		'country'       => '...',
+		'country_code'  => '...',
 		'country_name   => '...',
 		'country_id     => '...',
-		'city'          => '...',
-		'region'        => '...',
+		'city_name'     => '...',
+		'region_name'   => '...',
 		'district'      => '...',
 		'lat'           => '...',
 		'lng'           => '...'
 	]	
 	
 #### `public getField($field)`	
-Возвращает значние поля массива, полачаемого методом `public getData()`.
+Возвращает значние поля массива из метода `public getData()`.
 	
 #### `public getCity()`
 Устарел, будет удалён в следующий версиях	
