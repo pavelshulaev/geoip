@@ -1,7 +1,9 @@
 <?php
 namespace Rover\GeoIp\Service;
 
-use Bitrix\Main\ArgumentOutOfRangeException;
+use Rover\GeoIp\Helper\Charset;
+use Rover\GeoIp\Service;
+
 /**
  * Created by PhpStorm.
  * User: lenovo
@@ -10,46 +12,55 @@ use Bitrix\Main\ArgumentOutOfRangeException;
  *
  * @author Pavel Shulaev (https://rover-it.me)
  */
-class IpGeoBase extends Base
+class IpGeoBase extends Service
 {
-	/**
-	 * @param             $ip
-	 * @param null|string $charset
-	 * @return array
-	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public static function get($ip, $charset = self::CHARSET__UTF_8)
-	{
-		if (!Ip::isV4($ip))
-			throw new ArgumentOutOfRangeException('ip');
+    /**
+     * @return bool
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function isActive()
+    {
+        return true;
+    }
 
-		$string = self::load('http://ipgeobase.ru:7020/geo?ip=' . $ip, $charset);
+    /**
+     * @return array
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function getManifest()
+    {
+        return array(
+            'name'      => 'IpGeoBase',
+            'sort'      => 100,
+            'url'       => 'http://ipgeobase.ru:7020/geo?ip=' . $this->ip,
+            'charset'   => Charset::WINDOWS_1251
+        );
+    }
 
-		return self::parse($string);
-	}
-
-	/**
+    /**
 	 * @param $string
 	 * @return array
 	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
-	protected static function parse($string)
+	protected function parse($string)
 	{
-		$data   = [];
-		$pa     = [];
-
-		$pa['inetnum']  = '#<inetnum>(.*)</inetnum>#is';
-		$pa['country']  = '#<country>(.*)</country>#is';
-		$pa['city']     = '#<city>(.*)</city>#is';
-		$pa['region']   = '#<region>(.*)</region>#is';
-		$pa['district'] = '#<district>(.*)</district>#is';
-		$pa['lat']      = '#<lat>(.*)</lat>#is';
-		$pa['lng']      = '#<lng>(.*)</lng>#is';
+		$data   = array();
+		$pa     = array(
+            self::FIELD__INETNUM        => '#<inetnum>(.*)</inetnum>#is',
+            self::FIELD__COUNTRY_CODE   => '#<country>(.*)</country>#is',
+            self::FIELD__CITY_NAME      => '#<city>(.*)</city>#is',
+            self::FIELD__REGION_NAME    => '#<region>(.*)</region>#is',
+            self::FIELD__DISTRICT       => '#<district>(.*)</district>#is',
+            self::FIELD__LAT            => '#<lat>(.*)</lat>#is',
+            self::FIELD__LNG            => '#<lng>(.*)</lng>#is',
+            self::FIELD__MESSAGE        => '#<message>(.*)</message>#is'
+        );
 
 		foreach($pa as $key => $pattern)
 			if(preg_match($pattern, $string, $out))
 				$data[$key] = trim($out[1]);
+
+        $data[self::FIELD__REGION_CODE] = 'n/a';
 
 		return $data;
 	}

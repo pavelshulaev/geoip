@@ -8,7 +8,7 @@
  * @author Pavel Shulaev (https://rover-it.me)
  */
 
-namespace Rover\GeoIp\Service;
+namespace Rover\GeoIp\Helper;
 
 use Bitrix\Main\Application;
 
@@ -26,7 +26,7 @@ class Ip
      */
     public static function getCur()
     {
-        $ips    = [];
+        $ips    = array();
         $server = Application::getInstance()
             ->getContext()->getServer();
 

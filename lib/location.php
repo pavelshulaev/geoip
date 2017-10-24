@@ -10,10 +10,9 @@ namespace Rover\GeoIp;
  */
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Localization\Loc;
-use Rover\GeoIp\Service\Base;
-use Rover\GeoIp\Service\FreeGeoIp;
-use Rover\GeoIp\Service\Ip;
-use Rover\GeoIp\Service\IpGeoBase;
+use Bitrix\Main\SystemException;
+use Rover\GeoIp\Helper\Charset;
+use Rover\GeoIp\Helper\Ip;
 
 Loc::LoadMessages(__FILE__);
 
@@ -25,32 +24,17 @@ Loc::LoadMessages(__FILE__);
  */
 class Location
 {
-    const FIELD__IP         = 'ip';
-    const FIELD__CITY       = 'city';
-    const FIELD__REGION     = 'region';
-    const FIELD__COUNTRY    = 'country';
-    const FIELD__COUNTRY_NAME   = 'country_name';
-    const FIELD__COUNTRY_ID = 'country_id';
-    const FIELD__DISTRICT   = 'district';
-    const FIELD__LAT        = 'lat';
-    const FIELD__LNG        = 'lng';
-    const FIELD__INETNUM    = 'inetnum';
 	/**
 	 * instances
 	 * @var array
 	 */
-	protected static $instances = [];
+	protected static $instances = array();
 
 	/**
 	 * data of instance
 	 * @var array
 	 */
-	protected $data = [];
-
-    /**
-     * @var bool
-     */
-	protected $requestFlag = false;
+	protected $data;
 
     /**
      * @var string
@@ -70,23 +54,43 @@ class Location
     /**
      * Location constructor.
      *
-     * @param $ip
-     * @param $charset
+     * @param        $ip
+     * @param        $charset
+     * @param string $service
      * @throws ArgumentOutOfRangeException
      */
-    private function __construct($ip, $charset)
+    private function __construct($ip, $charset, $service = '')
     {
         if (!Ip::isValid($ip))
             throw new ArgumentOutOfRangeException('ip');
 
         $this->ip       = $ip;
-        $this->charset  = $charset;
+        $this->charset  = Charset::prepare($charset);
+        $this->service  = trim($service);
+    }
+
+    /**
+     * @param null   $ip
+     * @param string $charset
+     * @param string $service
+     * @return mixed
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public static function getInstance($ip = null, $charset = Charset::AUTO, $service = '')
+    {
+        if (is_null($ip))
+            $ip = Ip::getCur();
+
+        if (!isset(self::$instances[$ip]))
+            self::$instances[$ip] = new self($ip, $charset, $service);
+
+        return self::$instances[$ip];
     }
 
     /**
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function request()
+    protected function loadData()
     {
         // info in cookie
         if (Cookie::checkIp($this->ip))
@@ -95,123 +99,60 @@ class Location
             return;
         }
 
-        $this->reload();
-
-        Cookie::set($this->data);
+        $this->reload($this->ip);
     }
 
     /**
-     * @param null $ip
+     * @param $ip
      * @return $this
-     * @throws ArgumentOutOfRangeException
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function reload($ip = null)
+    public function reload($ip)
     {
-        $ip = trim($ip);
-        if (!$ip)
-            $ip = $this->ip;
+        $service = strlen($this->service)
+            ? ServiceContainer::getByName($this->service, $ip, $this->charset)
+            : ServiceContainer::getFirstValidService($ip, $this->charset);
 
-        if (!Ip::isValid($ip))
-            throw new ArgumentOutOfRangeException('ip');
+        if (!$service instanceof Service)
+            throw new SystemException('valid service not found');
 
-        $data = [];
+        $this->data = $service->getData();
 
-        if (Ip::isV4($ip)) {
-            try{
-                $data = IpGeoBase::get($ip, $this->charset);
-
-                if (!is_array($data))
-                    $data = [];
-
-                // adding info, if needed
-                if (!isset($data['city']) || !strlen($data['city'])) {
-                    try{
-                        $data = array_merge($data, FreeGeoIp::get($ip, $this->charset));
-                    } catch (\Exception $e) { }
-                    $this->service  = 'FreeGeoIp';
-                } else {
-                    $this->service  = 'IpGeoBase';
-                }
-
-                $data = $this->addCountryData($data);
-
-            } catch (\Exception $e) { }
-        }
-
-        $this->data = array_merge(['ip' => $ip], $data);
+        Cookie::set($this->data);
 
         return $this;
     }
 
     /**
-     * @param $data
-     * @return mixed
-     * @author Pavel Shulaev (https://rover-it.me)
-     */
-    protected function addCountryData($data)
-    {
-        $data[self::FIELD__COUNTRY_NAME]    = null;
-        $data[self::FIELD__COUNTRY_ID]      = null;
-
-        if (!$data[self::FIELD__COUNTRY])
-            return $data;
-
-        $data[self::FIELD__COUNTRY_ID] = GetCountryIdByCode(strtoupper($data[self::FIELD__COUNTRY]));
-
-        if ($data[self::FIELD__COUNTRY_ID])
-            $data[self::FIELD__COUNTRY_NAME] = GetCountryByID($data[self::FIELD__COUNTRY_ID]);
-
-        return $data;
-    }
-
-	/**
-	 * @param null   $ip
-	 * @param string $charset
-	 * @return Location
-	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public static function getInstance($ip = null, $charset = Base::CHARSET__AUTO)
-	{
-		if (is_null($ip))
-			$ip = Ip::getCur();
-
-		if (!Ip::isValid($ip))
-			throw new ArgumentOutOfRangeException('ip');
-
-		if ($charset == Base::CHARSET__AUTO)
-		    $charset = LANG_CHARSET;
-
-		if (!isset(self::$instances[$ip]))
-			self::$instances[$ip] = new self($ip, $charset);
-
-		return self::$instances[$ip];
-	}
-
-    /**
-     * @param null $field
      * @return array|mixed|null
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function getData($field = null)
+	public function getData()
 	{
 	    // first request
-	    if (!$this->requestFlag){
-            $this->request();
-            $this->requestFlag = true;
-        }
+	    if (is_null($this->data))
+            $this->loadData();
+
+	    return $this->data;
+	}
+
+    /**
+     * @param $field
+     * @return mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getField($field)
+    {
+        $data = $this->getData();
 
         $field = trim($field);
 
-	    if (!strlen($field))
-	        return $this->data;
+        if (strlen($field) && isset($data[$field]) )
+            return $data[$field];
 
-	    if (isset($this->data[$field]))
-            return $this->data[$field];
-
-		return null;
-	}
+        return null;
+    }
 
 	/**
 	 * @return mixed
@@ -219,25 +160,45 @@ class Location
 	 */
 	public function getIp()
 	{
-		return $this->getData(self::FIELD__IP);
+		return $this->getField(Service::FIELD__IP);
 	}
 
 	/**
 	 * @return mixed
 	 * @author Pavel Shulaev (https://rover-it.me)
+     * @deprecated use getCityName
 	 */
 	public function getCity()
 	{
-		return $this->getData(self::FIELD__CITY);
+		return $this->getField(Service::FIELD__CITY_NAME);
 	}
 
 	/**
 	 * @return mixed
 	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
+	public function getCityName()
+	{
+		return $this->getField(Service::FIELD__CITY_NAME);
+	}
+
+	/**
+	 * @return mixed
+	 * @author Pavel Shulaev (https://rover-it.me)
+     * @deprecated
+	 */
 	public function getCountry()
 	{
-		return $this->getData(self::FIELD__COUNTRY);
+		return $this->getField(Service::FIELD__COUNTRY_CODE);
+	}
+
+	/**
+	 * @return mixed
+	 * @author Pavel Shulaev (https://rover-it.me)
+	 */
+	public function getCountryCode()
+	{
+		return $this->getField(Service::FIELD__COUNTRY_CODE);
 	}
 
     /**
@@ -246,7 +207,7 @@ class Location
      */
 	public function getCountryName()
 	{
-	    return $this->getData(self::FIELD__COUNTRY_NAME);
+	    return $this->getField(Service::FIELD__COUNTRY_NAME);
 	}
 
     /**
@@ -255,16 +216,35 @@ class Location
      */
 	public function getCountryId()
     {
-        return $this->getData(self::FIELD__COUNTRY_ID);
+        return $this->getField(Service::FIELD__COUNTRY_ID);
     }
 
 	/**
 	 * @return mixed
 	 * @author Pavel Shulaev (https://rover-it.me)
+     * @deprecated use getRegionName
 	 */
 	public function getRegion()
 	{
-		return $this->getData(self::FIELD__REGION);
+		return $this->getField(Service::FIELD__REGION_NAME);
+	}
+
+    /**
+     * @return mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getRegionName()
+	{
+		return $this->getField(Service::FIELD__REGION_NAME);
+	}
+
+    /**
+     * @return mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function getRegionCode()
+	{
+		return $this->getField(Service::FIELD__REGION_CODE);
 	}
 
 	/**
@@ -273,7 +253,7 @@ class Location
 	 */
 	public function getDistrict()
 	{
-		return $this->getData(self::FIELD__DISTRICT);
+		return $this->getField(Service::FIELD__DISTRICT);
 	}
 
 	/**
@@ -282,7 +262,7 @@ class Location
 	 */
 	public function getLat()
 	{
-		return $this->getData(self::FIELD__LAT);
+		return $this->getField(Service::FIELD__LAT);
 	}
 
 	/**
@@ -291,7 +271,7 @@ class Location
 	 */
 	public function getLng()
 	{
-		return $this->getData(self::FIELD__LNG);
+		return $this->getField(Service::FIELD__LNG);
 	}
 
 	/**
@@ -300,7 +280,7 @@ class Location
 	 */
 	public function getInetnum()
 	{
-		return $this->getData(self::FIELD__INETNUM);
+		return $this->getField(Service::FIELD__INETNUM);
 	}
 
     /**
@@ -309,7 +289,7 @@ class Location
      */
 	public function getService()
     {
-        return $this->service;
+        return $this->getField(Service::FIELD__SERVICE);
     }
 
     /**
