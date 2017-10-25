@@ -70,15 +70,16 @@ class Location
     }
 
     /**
-     * @param null   $ip
+     * @param string $ip
      * @param string $charset
      * @param string $service
-     * @return mixed
+     * @return self
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function getInstance($ip = null, $charset = Charset::AUTO, $service = '')
+    public static function getInstance($ip = '', $charset = Charset::AUTO, $service = '')
     {
-        if (is_null($ip))
+        $ip = trim($ip);
+        if (!strlen($ip))
             $ip = Ip::getCur();
 
         if (!isset(self::$instances[$ip]))
@@ -99,7 +100,7 @@ class Location
             return;
         }
 
-        $this->reload($this->ip);
+        $this->reload();
     }
 
     /**
@@ -108,8 +109,12 @@ class Location
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function reload($ip)
+    public function reload($ip = '')
     {
+        $ip = trim($ip);
+        if (!strlen($ip))
+            $ip = $this->ip;
+
         $service = strlen($this->service)
             ? ServiceContainer::getByName($this->service, $ip, $this->charset)
             : ServiceContainer::getFirstValidService($ip, $this->charset);

@@ -236,6 +236,6 @@ abstract class Service
     {
         $data = $this->getData();
 
-        return isset($data[self::FIELD__CITY_NAME]) && strlen($data[self::FIELD__CITY_NAME]);
+        return isset($data[self::FIELD__COUNTRY_NAME]) && strlen($data[self::FIELD__COUNTRY_NAME]);
     }
 }
