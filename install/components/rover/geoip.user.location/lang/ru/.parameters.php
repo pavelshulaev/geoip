@@ -7,7 +7,7 @@
  * @author Shulaev (pavel.shulaev@gmail.com)
  */
 
-$MESS['rover-gi-ul__page-size']       = 'Количество пользователей на странице';
+$MESS['rover-gi-ul__page-size']       = 'Количество пользователей на одной странице';
 
 $MESS['rover-gi-ul__field-city']       = 'Куда добавлять город';
 $MESS['rover-gi-ul__field-city-PERSONAL_CITY']   = 'Город (личный) [PERSONAL_CITY]';

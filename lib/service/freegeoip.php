@@ -5,57 +5,64 @@
  * Date: 27.02.2017
  * Time: 14:43
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 
 namespace Rover\GeoIp\Service;
 
-use Bitrix\Main\ArgumentOutOfRangeException;
+use Rover\GeoIp\Helper\Charset;
+use Rover\GeoIp\Service;
 
 /**
  * Class FreeGeoIp
  *
  * @package Rover\GeoIp\Service
- * @author  Pavel Shulaev (http://rover-it.me)
+ * @author  Pavel Shulaev (https://rover-it.me)
  */
-class FreeGeoIp extends Base
+class FreeGeoIp extends Service
 {
-	/**
-	 * @param             $ip
-	 * @param null|string $charset
-	 * @return array
-	 * @throws ArgumentOutOfRangeException
-	 * @author Pavel Shulaev (http://rover-it.me)
-	 */
-	public static function get($ip, $charset = self::CHARSET__UTF_8)
-	{
-		if (!self::isValidIp($ip))
-			throw new ArgumentOutOfRangeException('ip');
+    /**
+     * @return bool
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function isActive()
+    {
+        return true;
+    }
 
-		$string = self::load('freegeoip.net/xml/' . $ip, $charset);
+    /**
+     * @return array
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function getManifest()
+    {
+        return array(
+            'name'  => 'FreeGeoIp',
+            'sort'  => 200,
+            'url'   => 'freegeoip.net/xml/' . $this->ip,
+            'charset'   => Charset::UTF_8
+        );
+    }
 
-		return self::parse($string);
-	}
-
-	/**
+    /**
 	 * @param $string
 	 * @return array
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
-	protected static function parse($string)
+	protected function parse($string)
 	{
-		$data   = [];
-		$pa     = [];
+		$data   = array();
+		$pa     = array();
 
-		$pa['country']      = '#<countrycode>(.*)</countrycode>#is';
-		$pa['country_name'] = '#<countryname>(.*)</countryname>#is';
-		$pa['city']         = '#<city>(.*)</city>#is';
-		$pa['region_code']  = '#<regioncode>(.*)</regioncode>#is';
-		$pa['region']       = '#<regionname>(.*)</regionname>#is';
-		$pa['zip_code']     = '#<zipcode>(.*)</zipcode>#is';
-		$pa['lat']          = '#<latitude>(.*)</latitude>#is';
-		$pa['lng']          = '#<longitude>(.*)</longitude>#is';
-		$pa['metro_code']   = '#<metrocode>(.*)</metrocode>#is';
+		$pa[self::FIELD__COUNTRY_CODE] = '#<countrycode>(.*)</countrycode>#is';
+		$pa[self::FIELD__COUNTRY_NAME] = '#<countryname>(.*)</countryname>#is';
+		$pa[self::FIELD__CITY_NAME]    = '#<city>(.*)</city>#is';
+		$pa[self::FIELD__REGION_CODE]  = '#<regioncode>(.*)</regioncode>#is';
+		$pa[self::FIELD__REGION_NAME]  = '#<regionname>(.*)</regionname>#is';
+		$pa[self::FIELD__ZIP_CODE]     = '#<zipcode>(.*)</zipcode>#is';
+		$pa[self::FIELD__LAT]          = '#<latitude>(.*)</latitude>#is';
+		$pa[self::FIELD__LNG]          = '#<longitude>(.*)</longitude>#is';
+		$pa[self::FIELD__METRO_CODE]   = '#<metrocode>(.*)</metrocode>#is';
 
 		foreach($pa as $key => $pattern)
 			if(preg_match($pattern, $string, $out))

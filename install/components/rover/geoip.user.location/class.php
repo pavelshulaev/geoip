@@ -14,14 +14,18 @@ use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc as Loc;
 use \Bitrix\Main\ArgumentNullException;
 use \Rover\GeoIp\Location;
+use \Rover\GeoIp\Service;
 
 /**
  * Class RoverSlider
  *
- * @author Pavel Shulaev (http://rover-it.me)
+ * @author Pavel Shulaev (https://rover-it.me)
  */
 class GeoIpUserLocation extends CBitrixComponent
 {
+    /**
+     * @var
+     */
     protected $fields;
 
     const INPUT__USER   = 'user';
@@ -69,7 +73,7 @@ class GeoIpUserLocation extends CBitrixComponent
      */
     protected function getSelect()
     {
-        return array_unique(array_merge(['ID', 'NAME', 'LAST_NAME'], $this->getFields()));
+        return array_unique(array_merge(array('ID', 'NAME', 'LAST_NAME'), $this->getFields()));
     }
 
     /**
@@ -83,13 +87,13 @@ class GeoIpUserLocation extends CBitrixComponent
             ->setPageSize($this->arParams['PAGE_SIZE'])
             ->initFromUri();
 
-	    $query  = [
+	    $query  = array(
 	        'select'        => $this->getSelect(),
             "count_total"   => true,
             'offset'        => $nav->getOffset(),
             'limit'         => $nav->getLimit(),
-            'order'         => ['ID' => 'DESC']
-        ];
+            'order'         => array('ID' => 'DESC')
+        );
 
 	    $users = Main\UserTable::getList($query);
         $nav->setRecordCount($users->getCount());
@@ -116,9 +120,9 @@ class GeoIpUserLocation extends CBitrixComponent
             return $user;
         }
 
-        $user = $this->addFields($user, $location, 'CITY_FIELDS', Location::FIELD__CITY);
-        $user = $this->addFields($user, $location, 'STATE_FIELDS', Location::FIELD__REGION);
-        $user = $this->addFields($user, $location, 'COUNTRY_FIELDS', Location::FIELD__COUNTRY_ID);
+        $user = $this->addFields($user, $location, 'CITY_FIELDS', Service::FIELD__CITY_NAME);
+        $user = $this->addFields($user, $location, 'STATE_FIELDS', Service::FIELD__REGION_NAME);
+        $user = $this->addFields($user, $location, 'COUNTRY_FIELDS', Service::FIELD__COUNTRY_ID);
 
         return $user;
     }
@@ -130,13 +134,8 @@ class GeoIpUserLocation extends CBitrixComponent
 	protected function getUsers()
     {
         $users      = $this->getUsersRaw();
-        try{
-            $location = Location::getInstance();
-        } catch (\Exception $e){
-            $location = null;
-        }
-
-        $result     = [];
+        $location   = Location::getInstance();
+        $result     = array();
 
         while ($user = $users->fetch())
         {
@@ -161,7 +160,7 @@ class GeoIpUserLocation extends CBitrixComponent
                 $this->arParams['STATE_FIELDS'],
                 $this->arParams['COUNTRY_FIELDS']);
 
-            $this->fields = [];
+            $this->fields = array();
 
             foreach ($fields as $field) {
                 $field = trim($field);
@@ -218,7 +217,7 @@ class GeoIpUserLocation extends CBitrixComponent
      */
 	protected function getCountries()
     {
-        $result     = [];
+        $result     = array();
         $countries  =  GetCountryArray();
 
         foreach ($countries['reference_id'] as $countryPos => $countryId)
@@ -229,7 +228,7 @@ class GeoIpUserLocation extends CBitrixComponent
 
         $russia = $result[1];
         unset($result[1]);
-        $result = [0 => '-', 1 => $russia] + $result;
+        $result = array(0 => '-', 1 => $russia) + $result;
 
         return $result;
     }
@@ -256,7 +255,7 @@ class GeoIpUserLocation extends CBitrixComponent
 
         foreach ($this->arParams[$fieldType] as $field){
             if (empty($user[$field]))
-                $user[$field] = '~~' . $location->getData($locationType);
+                $user[$field] = '~~' . $location->getField($locationType);
         }
 
         return $user;

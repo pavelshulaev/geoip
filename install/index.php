@@ -39,7 +39,7 @@ class rover_geoip extends CModule
     }
 
     /**
-     * @author Pavel Shulaev (http://rover-it.me)
+     * @author Pavel Shulaev (https://rover-it.me)
      */
     function DoInstall()
     {
@@ -51,7 +51,7 @@ class rover_geoip extends CModule
 	}
 
     /**
-     * @author Pavel Shulaev (http://rover-it.me)
+     * @author Pavel Shulaev (https://rover-it.me)
      */
     function DoUninstall()
     {
@@ -64,7 +64,7 @@ class rover_geoip extends CModule
 
     /**
      * @return array
-     * @author Pavel Shulaev (http://rover-it.me)
+     * @author Pavel Shulaev (https://rover-it.me)
      */
     function GetModuleRightsList()
     {
@@ -79,7 +79,7 @@ class rover_geoip extends CModule
     }
 
 	/**
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	private function ProcessInstall()
     {
@@ -101,7 +101,7 @@ class rover_geoip extends CModule
     }
 
 	/**
-	 * @author Pavel Shulaev (http://rover-it.me)
+	 * @author Pavel Shulaev (https://rover-it.me)
 	 */
 	private function ProcessUninstall()
 	{
