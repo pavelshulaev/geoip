@@ -139,7 +139,8 @@ class GeoIpUserLocation extends CBitrixComponent
 
         while ($user = $users->fetch())
         {
-            if (!$this->checkUserFields($user))
+            if (!$this->checkUserFields($user)
+                && ($location instanceof Location))
                 $user = $this->addLocation($user, $location);
 
             $result[] = $user;
