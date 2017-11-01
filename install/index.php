@@ -22,6 +22,8 @@ class rover_geoip extends CModule
 	
     function __construct()
     {
+        global $errors;
+
 		$arModuleVersion	= array();
 
         require(__DIR__ . "/version.php");
@@ -85,7 +87,7 @@ class rover_geoip extends CModule
     {
         global $APPLICATION, $errors;
 
-        if (PHP_VERSION_ID < 50400)
+        if (PHP_VERSION_ID < 50306)
             $errors[] = Loc::getMessage('rover-gi__php_version_error');
 
         if (!function_exists('curl_init'))
@@ -97,7 +99,7 @@ class rover_geoip extends CModule
             ModuleManager::registerModule($this->MODULE_ID);
 
 	    $APPLICATION->IncludeAdminFile(Loc::getMessage("rover-gi__install_title"),
-            __DIR__ . "/message.php");
+            dirname(__FILE__) . "/message.php");
     }
 
 	/**
@@ -113,7 +115,7 @@ class rover_geoip extends CModule
 	        ModuleManager::unRegisterModule($this->MODULE_ID);
 
         $APPLICATION->IncludeAdminFile(Loc::getMessage("rover-gi__uninstall_title"),
-            __DIR__ . "/unMessage.php");
+            dirname(__FILE__) . "/unMessage.php");
 	}
 
     /**
@@ -125,7 +127,7 @@ class rover_geoip extends CModule
 
         $documentRoot = Application::getDocumentRoot();
 
-        if (!CopyDirFiles(__DIR__ . '/components/', $documentRoot . '/bitrix/components/', true, true))
+        if (!CopyDirFiles(dirname(__FILE__) . '/components/', $documentRoot . '/bitrix/components/', true, true))
             $errors[] = Loc::getMessage('rover-gi__copy_files_error');
     }
 
