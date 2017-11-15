@@ -145,7 +145,6 @@ class Location
                 );
             }
 
-
         return $this->data;
 	}
 
@@ -156,9 +155,8 @@ class Location
      */
 	public function getField($field)
     {
-        $data = $this->getData();
-
-        $field = trim($field);
+        $data   = $this->getData();
+        $field  = trim($field);
 
         if (strlen($field) && isset($data[$field]) )
             return $data[$field];
