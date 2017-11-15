@@ -137,9 +137,16 @@ class Location
 	{
 	    // first request
 	    if (is_null($this->data))
-            $this->loadData();
+            try{
+                $this->loadData();
+            } catch (\Exception $e) {
+                $this->data = array(
+                    'ERROR' => $e->getMessage()
+                );
+            }
 
-	    return $this->data;
+
+        return $this->data;
 	}
 
     /**
@@ -295,6 +302,15 @@ class Location
 	public function getService()
     {
         return $this->getField(Service::FIELD__SERVICE);
+    }
+
+    /**
+     * @return mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function getError()
+    {
+        return $this->getField('ERROR');
     }
 
     /**
