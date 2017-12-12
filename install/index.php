@@ -130,7 +130,7 @@ class rover_geoip extends CModule
 	private function copyFiles()
     {
         global $geoipErrors;
-      
+
         $documentRoot = Application::getDocumentRoot();
 
         if (!CopyDirFiles(dirname(__FILE__) . '/components/', $documentRoot . '/bitrix/components/', true, true))
