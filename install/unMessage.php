@@ -3,16 +3,16 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-global $APPLICATION, $errors;
+global $APPLICATION, $geoipErrors;
 
-if (!$errors)
+if (!$geoipErrors)
     echo \CAdminMessage::ShowNote(Loc::getMessage("MOD_UNINST_OK"));
 else
     echo \CAdminMessage::ShowMessage(
         Array(
             "TYPE"      => "ERROR",
             "MESSAGE"   => Loc::getMessage("MOD_UNINST_ERR"),
-            "DETAILS"   => implode("<br/>", $errors),
+            "DETAILS"   => implode("<br/>", $geoipErrors),
             "HTML"      => true
         ));
 

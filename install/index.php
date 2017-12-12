@@ -19,12 +19,16 @@ class rover_geoip extends CModule
     var $MODULE_NAME;
     var $MODULE_DESCRIPTION;
     var $MODULE_CSS;
-	
+
+    /**
+     * rover_geoip constructor.
+     */
     function __construct()
     {
-        global $errors;
+        global $geoipErrors;
 
 		$arModuleVersion	= array();
+        $geoipErrors        = array();
 
         require(__DIR__ . "/version.php");
 
@@ -32,7 +36,7 @@ class rover_geoip extends CModule
 			$this->MODULE_VERSION		= $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE	= $arModuleVersion["VERSION_DATE"];
 	    } else
-            $errors[] = Loc::getMessage('rover-gi__version_info_error');
+            $geoipErrors[] = Loc::getMessage('rover-gi__version_info_error');
 
         $this->MODULE_NAME			= Loc::getMessage('rover-gi__name');
         $this->MODULE_DESCRIPTION	= Loc::getMessage('rover-gi__descr');
@@ -85,17 +89,19 @@ class rover_geoip extends CModule
 	 */
 	private function ProcessInstall()
     {
-        global $APPLICATION, $errors;
+        global $geoipErrors;
 
         if (PHP_VERSION_ID < 50306)
-            $errors[] = Loc::getMessage('rover-gi__php_version_error');
+            $geoipErrors[] = Loc::getMessage('rover-gi__php_version_error');
 
         if (!function_exists('curl_init'))
-            $errors[] = Loc::getMessage('rover-gi__no-curl');
+            $geoipErrors[] = Loc::getMessage('rover-gi__no-curl');
 
         $this->copyFiles();
 
-        if (empty($errors))
+        global $APPLICATION, $geoipErrors;
+
+        if (empty($geoipErrors))
             ModuleManager::registerModule($this->MODULE_ID);
 
 	    $APPLICATION->IncludeAdminFile(Loc::getMessage("rover-gi__install_title"),
@@ -107,11 +113,11 @@ class rover_geoip extends CModule
 	 */
 	private function ProcessUninstall()
 	{
-        global $APPLICATION, $errors;
-
         $this->removeFiles();
 
-        if (empty($errors))
+        global $APPLICATION, $geoipErrors;
+
+        if (empty($geoipErrors))
 	        ModuleManager::unRegisterModule($this->MODULE_ID);
 
         $APPLICATION->IncludeAdminFile(Loc::getMessage("rover-gi__uninstall_title"),
@@ -123,12 +129,12 @@ class rover_geoip extends CModule
      */
 	private function copyFiles()
     {
-        global $errors;
-
+        global $geoipErrors;
+      
         $documentRoot = Application::getDocumentRoot();
 
         if (!CopyDirFiles(dirname(__FILE__) . '/components/', $documentRoot . '/bitrix/components/', true, true))
-            $errors[] = Loc::getMessage('rover-gi__copy_files_error');
+            $geoipErrors[] = Loc::getMessage('rover-gi__copy_files_error');
     }
 
     /**
