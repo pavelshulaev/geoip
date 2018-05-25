@@ -14,6 +14,7 @@ use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+pr($arResult);
 
 if (empty($arResult['USERS'])){
     ShowError('no users');
@@ -70,14 +71,13 @@ if (empty($arResult['USERS'])){
                                                 <?=$countryId==$value?'selected="selected"':''?>><?=$countryName?></option>
                                     <?php endforeach; ?>
                                 </select>
-                             <?php else:
-                            ?><input
-                                class="form-control"
-                                value="<?=$value?>"
-                                name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=$field?>]"
-                                type="text"><?php
-
-                                endif;
+                            <?php else:
+                                ?><input
+                                    class="form-control"
+                                    value="<?=$value?>"
+                                    name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=$field?>]"
+                                    type="text"><?php
+                            endif;
 
                         else:?>
                             <?=$value?>

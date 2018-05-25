@@ -31,11 +31,10 @@ class GeoIpUserLocation extends CBitrixComponent
     const INPUT__USER   = 'user';
     const INPUT__SELECT = 'select';
     const INPUT__SUBMIT = 'submit';
-	/**
-	 * @throws Main\LoaderException
-	 * @throws Main\SystemException
-	 * @author Shulaev (pavel.shulaev@gmail.com)
-	 */
+	
+    /**
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
 	public function onIncludeComponentLang()
 	{
 		$this->includeComponentLang(basename(__FILE__));
@@ -58,13 +57,17 @@ class GeoIpUserLocation extends CBitrixComponent
     }
 
     /**
+     * @throws Main\LoaderException
      * @throws Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
     protected function checkParams()
     {
         if (!Main\Loader::includeModule('rover.geoip'))
-            throw new Main\SystemException('no rover.geoip module');
+            throw new Main\SystemException(Loc::getMessage('rover-geoip__no-geoip-module'));
+
+        if (!Main\Loader::includeModule('statistic'))
+            throw new Main\SystemException(Loc::getMessage('rover-geoip__no-statistic-module'));
     }
 
     /**
@@ -78,6 +81,8 @@ class GeoIpUserLocation extends CBitrixComponent
 
     /**
      * @return Main\DB\Result
+     * @throws Main\ArgumentException
+     * @throws Main\ObjectPropertyException
      * @author Pavel Shulaev (https://rover-it.me)
      */
 	protected function getUsersRaw()
@@ -106,13 +111,18 @@ class GeoIpUserLocation extends CBitrixComponent
      * @param          $user
      * @param Location $location
      * @return mixed
+     * @throws ArgumentNullException
+     * @throws Main\Db\SqlQueryException
      * @author Pavel Shulaev (https://rover-it.me)
      */
 	protected function addLocation($user, Location $location)
     {
         $regIp = $this->getRegIp($user['ID']);
+        var_dump($regIp);
         if (!$regIp)
             return $user;
+
+        $user['REG_IP'] = $regIp;
 
         try{
             $location->reload($regIp);
@@ -129,6 +139,10 @@ class GeoIpUserLocation extends CBitrixComponent
 
     /**
      * @return array
+     * @throws ArgumentNullException
+     * @throws Main\ArgumentException
+     * @throws Main\Db\SqlQueryException
+     * @throws Main\ObjectPropertyException
      * @author Pavel Shulaev (https://rover-it.me)
      */
 	protected function getUsers()
@@ -139,10 +153,9 @@ class GeoIpUserLocation extends CBitrixComponent
 
         while ($user = $users->fetch())
         {
-            if (!$this->checkUserFields($user)
-                && ($location instanceof Location))
+            if ($location instanceof Location)
                 $user = $this->addLocation($user, $location);
-
+pr($user); die();
             $result[] = $user;
         }
 
@@ -218,7 +231,7 @@ class GeoIpUserLocation extends CBitrixComponent
 	protected function getCountries()
     {
         $result     = array();
-        $countries  =  GetCountryArray();
+        $countries  = GetCountryArray();
 
         foreach ($countries['reference_id'] as $countryPos => $countryId)
             if (isset($countries['reference'][$countryPos]))
@@ -247,16 +260,14 @@ class GeoIpUserLocation extends CBitrixComponent
             return $user;
 
         $locationType = trim($locationType);
-        if (!$locationType)
+        if (!strlen($locationType))
             return $user;
 
         if (!isset($this->arParams[$fieldType]))
             return $user;
 
-        foreach ($this->arParams[$fieldType] as $field){
-            if (empty($user[$field]))
-                $user[$field] = '~~' . $location->getField($locationType);
-        }
+        foreach ($this->arParams[$fieldType] as $field)
+            $user[$field] = '~' . $location->getField($locationType);
 
         return $user;
     }
@@ -265,6 +276,7 @@ class GeoIpUserLocation extends CBitrixComponent
      * @param $userId
      * @return null
      * @throws ArgumentNullException
+     * @throws Main\Db\SqlQueryException
      * @author Pavel Shulaev (https://rover-it.me)
      */
 	protected function getRegIp($userId)
@@ -308,16 +320,13 @@ class GeoIpUserLocation extends CBitrixComponent
 	 */
 	public function executeComponent()
 	{
-		$this->setFrameMode(true);
-		if ($this->StartResultCache($this->arParams['CACHE_TIME'])) {
-			try {
-				$this->setFrameMode(true);
-				$this->checkParams();
-				$this->getResult();
-				$this->includeComponentTemplate();
-			} catch (Exception $e) {
-				ShowError($e->getMessage());
-			}
-		}
+        try {
+            $this->setFrameMode(true);
+            $this->checkParams();
+            $this->getResult();
+            $this->includeComponentTemplate();
+        } catch (Exception $e) {
+            ShowError($e->getMessage());
+        }
 	}
 }
