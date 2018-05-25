@@ -118,7 +118,6 @@ class GeoIpUserLocation extends CBitrixComponent
 	protected function addLocation($user, Location $location)
     {
         $regIp = $this->getRegIp($user['ID']);
-        var_dump($regIp);
         if (!$regIp)
             return $user;
 
@@ -155,7 +154,7 @@ class GeoIpUserLocation extends CBitrixComponent
         {
             if ($location instanceof Location)
                 $user = $this->addLocation($user, $location);
-pr($user); die();
+
             $result[] = $user;
         }
 
@@ -216,8 +215,6 @@ pr($user); die();
      */
 	protected function getResult()
 	{
-	    $this->update();
-
 	    $this->arResult['USERS']            = $this->getUsers();
 	    $this->arResult['FIELDS']           = $this->getSelect();
 	    $this->arResult['LOCATION_FIELDS']  = $this->getFields();
@@ -267,7 +264,7 @@ pr($user); die();
             return $user;
 
         foreach ($this->arParams[$fieldType] as $field)
-            $user[$field] = '~' . $location->getField($locationType);
+            $user['~' . $field] = $location->getField($locationType);
 
         return $user;
     }
@@ -323,6 +320,7 @@ pr($user); die();
         try {
             $this->setFrameMode(true);
             $this->checkParams();
+            $this->update();
             $this->getResult();
             $this->includeComponentTemplate();
         } catch (Exception $e) {

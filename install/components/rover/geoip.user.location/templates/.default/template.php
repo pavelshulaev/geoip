@@ -14,8 +14,6 @@ use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-pr($arResult);
-
 if (empty($arResult['USERS'])){
     ShowError('no users');
     return;
@@ -46,26 +44,31 @@ if (empty($arResult['USERS'])){
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($arResult['USERS'] as $user): ?>
+            <?php foreach ($arResult['USERS'] as $user):?>
                 <tr>
                     <td><input class="update-marker" type="checkbox" name="<?=GeoIpUserLocation::INPUT__SELECT?>[<?=$user['ID']?>]"></td>
                     <?php foreach ($arResult['FIELDS'] as $field):
 
-                        $value = isset($user[$field]) ? trim($user[$field]) : '';
-                        $class = '';
+                        $cellClass = '';
+                        $inputClass = '';
 
-                        if (strlen($value) && strpos($value, '~~') === 0) {
-                            $class = 'has-success';
-                            $value = substr($value, 2);
+                        if (isset($user[$field]) && strlen($user[$field])) {
+                            $value = trim($user[$field]);
+                        } elseif (isset($user['~' . $field]) && strlen($user['~' . $field])) {
+                            $value = trim($user['~' . $field]);
+                            $cellClass = 'has-success';
+                            $inputClass = 'bg-success';
+                        } else {
+                            $value = '';
                         }
 
-                        ?><td class="<?=$class?>"><?php
+                        ?><td class="<?=$cellClass?>"><?php
 
                         if (in_array($field, $arResult['LOCATION_FIELDS'])):
                             if (in_array($field, $arParams['COUNTRY_FIELDS'])):?>
                                 <select
                                         name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=$field?>]"
-                                        class="form-control">
+                                        class="form-control <?=$inputClass?>">
                                     <?php foreach ($arResult['COUNTRIES'] as $countryId => $countryName): ?>
                                         <option value="<?=$countryId?>"
                                                 <?=$countryId==$value?'selected="selected"':''?>><?=$countryName?></option>
@@ -73,7 +76,7 @@ if (empty($arResult['USERS'])){
                                 </select>
                             <?php else:
                                 ?><input
-                                    class="form-control"
+                                    class="form-control <?=$inputClass?>"
                                     value="<?=$value?>"
                                     name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=$field?>]"
                                     type="text"><?php
