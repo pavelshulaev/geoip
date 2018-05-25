@@ -13,5 +13,5 @@ $MESS ['rover-gi__uninstall_title']		    = "Удаление модуля «GeoI
 
 $MESS ['rover-gi__version_info_error']	    = "Не найдена информация о версии";
 $MESS ['rover-gi__copy_files_error']	    = "Ошибка копирования файлов";
-$MESS ['rover-gi__php_version_error']	    = "Требуется php версии 5.4 и выше";
+$MESS ['rover-gi__php_version_error']	    = "Требуется php версии 5.3 и выше";
 $MESS ['rover-gi__no-curl']	                = "Не найдена библиотека CURL";
