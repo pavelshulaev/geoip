@@ -84,7 +84,8 @@ abstract class Service
 
     /**
      * @param bool $reload
-     * @return array|mixed
+     * @return array
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
 	public function getData($reload = false)
@@ -113,6 +114,7 @@ abstract class Service
 
     /**
      * @param bool $reload
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
     protected function loadData($reload = false)
@@ -154,6 +156,7 @@ abstract class Service
 
     /**
      * @return mixed
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
 	protected function load()
@@ -230,6 +233,7 @@ abstract class Service
 
     /**
      * @return bool
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
     public function isValid()
