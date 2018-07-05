@@ -24,32 +24,23 @@ Loc::LoadMessages(__FILE__);
  */
 class Location
 {
-	/**
-	 * instances
-	 * @var array
-	 */
+	/** @var array */
 	protected static $instances = array();
 
-	/**
-	 * data of instance
-	 * @var array
-	 */
+	/** @var array */
 	protected $data;
 
-    /**
-     * @var string
-     */
+    /** @var string */
 	protected $ip;
 
-    /**
-     * @var string
-     */
+    /** @var string */
 	protected $charset;
 
-    /**
-     * @var string
-     */
+    /** @var string */
 	protected $service;
+
+	/** @var string */
+	protected $language;
 
     /**
      * Location constructor.
@@ -57,9 +48,10 @@ class Location
      * @param        $ip
      * @param        $charset
      * @param string $service
+     * @param string $language
      * @throws ArgumentOutOfRangeException
      */
-    private function __construct($ip, $charset, $service = '')
+    private function __construct($ip, $charset, $service = '', $language = LANGUAGE_ID)
     {
         if (!Ip::isValid($ip))
             throw new ArgumentOutOfRangeException('ip');
@@ -67,28 +59,32 @@ class Location
         $this->ip       = $ip;
         $this->charset  = Charset::prepare($charset);
         $this->service  = trim($service);
+        $this->language = $language;
     }
 
     /**
-     * @param string $ip
-     * @param string $charset
-     * @param string $service
-     * @return self
+     * @param string       $ip
+     * @param string       $charset
+     * @param string       $service
+     * @param mixed|string $language
+     * @return Location
+     * @throws ArgumentOutOfRangeException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function getInstance($ip = '', $charset = Charset::AUTO, $service = '')
+    public static function getInstance($ip = '', $charset = Charset::AUTO, $service = '', $language = LANGUAGE_ID)
     {
         $ip = trim($ip);
         if (!strlen($ip))
             $ip = Ip::getCur();
 
         if (!isset(self::$instances[$ip]))
-            self::$instances[$ip] = new self($ip, $charset, $service);
+            self::$instances[$ip] = new self($ip, $charset, $service, $language);
 
         return self::$instances[$ip];
     }
 
     /**
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
     protected function loadData()
@@ -122,7 +118,7 @@ class Location
         if (!$service instanceof Service)
             throw new SystemException('valid service not found');
 
-        $this->data = $service->getData();
+        $this->data = $service->getData($this->language);
 
         Cookie::set($this->data);
 
@@ -318,5 +314,21 @@ class Location
 	public static function getCurIp()
     {
         return Ip::getCur();
+    }
+
+    /**
+     * @return string
+     */
+    public function getLanguage()
+    {
+        return $this->language;
+    }
+
+    /**
+     * @param string $language
+     */
+    public function setLanguage($language)
+    {
+        $this->language = $language;
     }
 }

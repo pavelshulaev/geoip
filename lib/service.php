@@ -32,19 +32,13 @@ abstract class Service
     const FIELD__ZIP_CODE       = 'zip_code';
     const FIELD__METRO_CODE     = 'metro_code';
 
-    /**
-     * @var string
-     */
+    /** @var string */
 	protected $ip;
 
-    /**
-     * @var string
-     */
+    /** @var string */
 	protected $charset;
 
-    /**
-     * @var array
-     */
+    /** @var array */
 	protected $data;
 
     /**
@@ -70,11 +64,12 @@ abstract class Service
 	abstract public function isActive();
 
     /**
-     * @param $string
+     * @param        $string
+     * @param string $language
      * @return mixed
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	abstract protected function parse($string);
+	abstract protected function parse($string, $language = LANGUAGE_ID);
 
     /**
      * @return mixed
@@ -83,14 +78,15 @@ abstract class Service
 	abstract public function getManifest();
 
     /**
-     * @param bool $reload
+     * @param string $language
+     * @param bool   $reload
      * @return array
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function getData($reload = false)
+	public function getData($language = LANGUAGE_ID, $reload = false)
     {
-        $this->loadData($reload);
+        $this->loadData($language, $reload);
 
         return $this->data;
     }
@@ -113,18 +109,19 @@ abstract class Service
     }
 
     /**
-     * @param bool $reload
+     * @param string $language
+     * @param bool   $reload
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function loadData($reload = false)
+    protected function loadData($language = LANGUAGE_ID, $reload = false)
     {
         if (is_null($this->data) || $reload) {
             $string = static::load();
             $string = Charset::convert(static::getManifestField('charset'), $this->charset, $string);
 
-            $data   = static::parse($string);
-            $data   = $this->addCountryData($data);
+            $data   = static::parse($string, $language);
+            $data   = $this->addCountryData($data, $language);
 
             $data[self::FIELD__SERVICE] = static::getManifestField('name');
             $data[self::FIELD__IP]      = $this->ip;
@@ -134,11 +131,12 @@ abstract class Service
     }
 
     /**
-     * @param $data
+     * @param              $data
+     * @param mixed|string $language
      * @return mixed
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function addCountryData($data)
+    protected function addCountryData($data, $language = LANGUAGE_ID)
     {
         $data[self::FIELD__COUNTRY_NAME]    = null;
         $data[self::FIELD__COUNTRY_ID]      = null;
@@ -149,7 +147,7 @@ abstract class Service
         $data[self::FIELD__COUNTRY_ID] = GetCountryIdByCode(strtoupper($data[self::FIELD__COUNTRY_CODE]));
 
         if ($data[self::FIELD__COUNTRY_ID])
-            $data[self::FIELD__COUNTRY_NAME] = GetCountryByID($data[self::FIELD__COUNTRY_ID]);
+            $data[self::FIELD__COUNTRY_NAME] = GetCountryByID($data[self::FIELD__COUNTRY_ID], $language);
 
         return $data;
     }

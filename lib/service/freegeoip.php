@@ -21,13 +21,15 @@ use Rover\GeoIp\Service;
  */
 class FreeGeoIp extends Service
 {
+    const NAME = 'FreeGeoIp';
+
     /**
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
     public function isActive()
     {
-        return true;
+        return false;
     }
 
     /**
@@ -37,23 +39,24 @@ class FreeGeoIp extends Service
     public function getManifest()
     {
         return array(
-            'name'  => 'FreeGeoIp',
-            'sort'  => 200,
-            'url'   => 'freegeoip.net/xml/' . $this->ip,
+            'name'      => self::NAME,
+            'sort'      => 200,
+            'url'       => 'freegeoip.net/xml/' . $this->ip,
             'charset'   => Charset::UTF_8
         );
     }
 
     /**
-	 * @param $string
-	 * @return array
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	protected function parse($string)
+     * @param        $string
+     * @param string $language
+     * @return array|mixed
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	protected function parse($string, $language = LANGUAGE_ID)
 	{
 		$data   = array();
 		$pa     = array();
-
+pr($string);
 		$pa[self::FIELD__COUNTRY_CODE] = '#<countrycode>(.*)</countrycode>#is';
 		$pa[self::FIELD__COUNTRY_NAME] = '#<countryname>(.*)</countryname>#is';
 		$pa[self::FIELD__CITY_NAME]    = '#<city>(.*)</city>#is';

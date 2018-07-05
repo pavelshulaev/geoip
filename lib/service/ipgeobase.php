@@ -1,9 +1,4 @@
 <?php
-namespace Rover\GeoIp\Service;
-
-use Rover\GeoIp\Helper\Charset;
-use Rover\GeoIp\Service;
-
 /**
  * Created by PhpStorm.
  * User: lenovo
@@ -12,8 +7,21 @@ use Rover\GeoIp\Service;
  *
  * @author Pavel Shulaev (https://rover-it.me)
  */
+namespace Rover\GeoIp\Service;
+
+use Rover\GeoIp\Helper\Charset;
+use Rover\GeoIp\Service;
+
+/**
+ * Class IpGeoBase
+ *
+ * @package Rover\GeoIp\Service
+ * @author  Pavel Shulaev (https://rover-it.me)
+ */
 class IpGeoBase extends Service
 {
+    const NAME = 'IpGeoBase';
+
     /**
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
@@ -30,7 +38,7 @@ class IpGeoBase extends Service
     public function getManifest()
     {
         return array(
-            'name'      => 'IpGeoBase',
+            'name'      => self::NAME,
             'sort'      => 100,
             'url'       => 'http://ipgeobase.ru:7020/geo?ip=' . $this->ip,
             'charset'   => Charset::WINDOWS_1251
@@ -38,11 +46,12 @@ class IpGeoBase extends Service
     }
 
     /**
-	 * @param $string
-	 * @return array
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	protected function parse($string)
+     * @param        $string
+     * @param string $language
+     * @return array|mixed
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	protected function parse($string, $language = LANGUAGE_ID)
 	{
 		$data   = array();
 		$pa     = array(
