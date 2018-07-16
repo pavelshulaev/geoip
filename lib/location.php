@@ -130,7 +130,7 @@ class Location
             if (!$service instanceof Service)
                 throw new SystemException('valid service not found');
 
-            $this->data = $service->getData($this->language);
+            $this->data = $service->getData($this->language, true);
 
             Cookie::set($this->data);
         }

@@ -136,14 +136,15 @@
             echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     // 5.255.252.0 - 5.255.255.255
             echo 'сервис: '             . $location->getService() . '<br><br>';     // IpGeoBase
             
+            $location->setLanguage('en');
             $location->reload('173.194.222.94'); // google.ru
     
             echo 'ip: '                 . $location->getIp() . '<br>';          // 173.194.222.94
-            echo 'город: '              . $location->getCityName() . '<br>';        // Маунтин-Вью
+            echo 'город: '              . $location->getCityName() . '<br>';        // Mountain View
             echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // US
-            echo 'название страны: '    . $location->getCountryName() . '<br>'; // США
+            echo 'название страны: '    . $location->getCountryName() . '<br>'; // USA
             echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 122
-            echo 'регион: '             . $location->getRegionName() . '<br>';      // Калифорния
+            echo 'регион: '             . $location->getRegionName() . '<br>';      // California
             echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      //
             echo 'округ: '              . $location->getDistrict() . '<br>';    // US-CA
             echo 'широта: '             . $location->getLat() . '<br>';         // 37.38605
