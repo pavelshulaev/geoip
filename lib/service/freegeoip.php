@@ -56,7 +56,7 @@ class FreeGeoIp extends Service
 	{
 		$data   = array();
 		$pa     = array();
-pr($string);
+
 		$pa[self::FIELD__COUNTRY_CODE] = '#<countrycode>(.*)</countrycode>#is';
 		$pa[self::FIELD__COUNTRY_NAME] = '#<countryname>(.*)</countryname>#is';
 		$pa[self::FIELD__CITY_NAME]    = '#<city>(.*)</city>#is';

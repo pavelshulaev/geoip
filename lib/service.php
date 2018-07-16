@@ -119,7 +119,7 @@ abstract class Service
         if (is_null($this->data) || $reload) {
             $string = static::load();
             $string = Charset::convert(static::getManifestField('charset'), $this->charset, $string);
-            pr($language);
+
             $data   = static::parse($string, $language);
             $data   = $this->addCountryData($data, $language);
 
