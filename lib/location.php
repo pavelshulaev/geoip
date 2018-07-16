@@ -42,6 +42,9 @@ class Location
 	/** @var string */
 	protected $language;
 
+	/** @var boolean */
+	protected $isBot;
+
     /**
      * Location constructor.
      *
@@ -60,6 +63,10 @@ class Location
         $this->charset  = Charset::prepare($charset);
         $this->service  = trim($service);
         $this->language = $language;
+        $this->isBot    = preg_match(
+            "~(Google|Yahoo|Rambler|Bot|Yandex|Spider|Snoopy|Crawler|Finder|Mail|curl)~i",
+            $_SERVER['HTTP_USER_AGENT']
+        );
     }
 
     /**
@@ -107,20 +114,26 @@ class Location
      */
     public function reload($ip = '')
     {
-        $ip = trim($ip);
-        if (!strlen($ip))
-            $ip = $this->ip;
+        if ($this->isBot) {
+            $this->data = array(
+                'ERROR' => 'Bot query'
+            );
+        } else {
+            $ip = trim($ip);
+            if (!strlen($ip))
+                $ip = $this->ip;
 
-        $service = strlen($this->service)
-            ? ServiceContainer::getByName($this->service, $ip, $this->charset)
-            : ServiceContainer::getFirstValidService($ip, $this->charset);
+            $service = strlen($this->service)
+                ? ServiceContainer::getByName($this->service, $ip, $this->charset)
+                : ServiceContainer::getFirstValidService($ip, $this->charset);
 
-        if (!$service instanceof Service)
-            throw new SystemException('valid service not found');
+            if (!$service instanceof Service)
+                throw new SystemException('valid service not found');
 
-        $this->data = $service->getData($this->language);
+            $this->data = $service->getData($this->language);
 
-        Cookie::set($this->data);
+            Cookie::set($this->data);
+        }
 
         return $this;
     }
