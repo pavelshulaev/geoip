@@ -10,6 +10,7 @@
 
 namespace Rover\GeoIp\Service;
 
+use Bitrix\Main\Config\Option;
 use Rover\GeoIp\Helper\Charset;
 use Rover\GeoIp\Service;
 use Bitrix\Main\Web\Json;
@@ -42,9 +43,14 @@ class Sypex extends Service
         return array(
             'name'      => self::NAME,
             'sort'      => 150,
-            'url'       => 'api.sypexgeo.net/json/' . $this->ip,
+            'url'       => self::getServerName() . '/json/' . $this->ip,
             'charset'   => Charset::UTF_8
         );
+    }
+
+    public function getServerName()
+    {
+        return Option::get('rover.geoip', 'sypex-server', 'api.sypexgeo.net');
     }
 
     /**
