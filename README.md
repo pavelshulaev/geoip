@@ -39,26 +39,34 @@
 Модуль доступен на [Маркетплейсе Битрикса](http://marketplace.1c-bitrix.ru/solutions/rover.geoip/).
 
 ## Api
-### Класс `\Rover\GeoIp\Location`
-
-#### `public static getInstance($ip = null, $charset = self::CHARSET__AUTO, $service = '', $language = LANGUAGE_ID)`
-Возвращает объект `\Rover\GeoIp\Location` для переднного ip-адреса. 
+### `\Rover\GeoIp\Location`
+#### Получение объекта `\Rover\GeoIp\Location`    
+   
+    $location = \Rover\GeoIp\Location::getInstance($ip = null, $charset = self::CHARSET__AUTO, $service = '', $language = LANGUAGE_ID);
+   
 * `$ip` - ip-адрес, по умолчанию используется текущий;
 * `$charset` - кодировка, по умолчания кодировка сайта;
 * `$service` - предпочитаемый сервис. По умолчанию сервисы вызываются в порядке, описанном в разделе [Службы определения местоположения](#Службы-определения-местоположения) и используется первый, вернувший результат.
 * `$language` - предпочитаемый язык ответа, по умолчанию равеня текущему языку сайта. На данный момент работает только с сервисом Sypex.
 
-#### `public reload($ip = null)`
+#### Reload
+ 
+    $location->reload($ip = null);
+    
 Метод позволяет загрузить/перезагрузить данные напрямую из сервисов геопозиционирования, минуя кеш.
 * `$ip` - ip-адрес, для которого перезагружаем данные. По умолчанию используется текущий;
 
 > Благодаря этому методу, можно несколько раз использовать объект `\Rover\GeoIp\Location` для определения местоположения по разным ip-адресам, не создавая каждый раз новый (см. [пример использования](#Пример-использования)).
 
-#### `public static getCurIp()`
-Возвращает текущий ip-адрес.
+#### Получение данных 
 
-#### `public getData()`
-Возвращает ассоциативный массив со всеми данными, которые удалось получить по ip.
+    use \Rover\GeoIp\Location;
+
+    $location = Location::getInstance();
+    $location->isSuccess();             // Флаг успешного получения данных
+    $location->getError();              // ошибки, возникшие при получении данных
+    $location->getCurIp();              // текущий ip-адрес.
+    $location->getData();               // Возвращает ассоциативный массив вида
 
 	[
 		'ip'            => 'xxx.xxx.xxx.xxx',
@@ -73,90 +81,81 @@
 		'lng'           => '...'
 	]	
 	
-#### `public getField($field)`	
-Возвращает значение поля массива из метода `public getData()`.
-
-    $location = \Rover\GeoIp\Location::getInstance();
-    $location->getField('region_name');
-	
-#### `public getCityName()`
-Возвращает название города.	
-
-#### `public getCountryCode()`
-Возвращает iso-код страны.	
-
-#### `public getCountryId()`
-Возвращает id страны в Битриксе (соответствует id стран, возвращаемых функцией [GetCountryArray](https://dev.1c-bitrix.ru/api_help/main/functions/other/getcountryarray.php)). Для корректной работы необходимо, чтобы результат `public getCountryCode()` был не пустым.
-
-#### `public getCountryName()`
-Возвращает название страны на текущем языке сайта. Для корректной работы необходимо, чтобы результат `public getCountryId()` был не пустым.
-
-#### `public getRegionName()`
-Возвращает название региона.	
-
-#### `public getRegionCode()`
-Возвращает iso-код региона.	
-
-#### `public getDistrict()`
-Возвращает название района.
-
-#### `public getLat()`
-Возвращает широту.	
-
-#### `public getLng()`
-Возвращает долготу.					
-
-#### `public getInetnum()`
-Возвращает диапазон адресов, в который входит переданный ip.					
-
-#### `public getService()`
-Возвращает название geoip-сервиса, с помощью которого были получены данные
+    $location->getField('region_name'); // значение поля массива из метода getData
+	$location->getCityName();           // название города.	
+	$location->getCountryCode();        // iso-код страны.
+	$location->getCountryId();          // id страны в Битриксе (соответствует id стран, возвращаемых функцией GetCountryArray (https://dev.1c-bitrix.ru/api_help/main/functions/other/getcountryarray.php)). Для корректной работы необходимо, чтобы результат getCountryCode() был не пустым.
+	$location->getCountryName();        // название страны на текущем языке сайта. Для корректной работы необходимо, чтобы результат getCountryId() был не пустым.
+	$location->getRegionName();         // название региона.
+	$location->getRegionCode();         // iso-код региона.	
+	$location->getDistrict();           // название района.
+	$location->getLat();                // широта
+	$location->getLng();                // долгота
+	$location->getInetnum();            // диапазон адресов, в который входит переданный ip.	
+	$location->getService();            // название geoip-сервиса, с помощью которого были получены данные
 	
 ## Пример использования
 
 	use Bitrix\Main\Loader,
         Rover\GeoIp\Location;
-
+    
     if (Loader::includeModule('rover.geoip')){
         try{
             echo 'ваш ip: ' . Location::getCurIp() . '<br><br>'; // текущий ip
-            
-            $location = Location::getInstance('5.255.255.88'); // yandex.ru
-            
-            echo 'ip: '                 . $location->getIp() . '<br>';          // 5.255.255.88
-            echo 'город: '              . $location->getCityName() . '<br>';        // Москва
-            echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // RU
-            echo 'название страны: '    . $location->getCountryName() . '<br>'; // Россия
-            echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 1
-            echo 'регион: '             . $location->getRegionName() . '<br>';      // Москва
-            echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      // 
-            echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
-            echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787
-            echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
-            echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     // 5.255.252.0 - 5.255.255.255
-            echo 'сервис: '             . $location->getService() . '<br><br>';     // IpGeoBase
-            
+    
+            $location = Location::getInstance('195.19.132.64', \Rover\GeoIp\Helper\Charset::AUTO, 'Sypex'); // yandex.ru
+            if ($location->isSuccess())
+            {
+                echo 'ip: '                 . $location->getIp() . '<br>';          // 5.255.255.88
+                echo 'город: '              . $location->getCityName() . '<br>';        // Москва
+                echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // RU
+                echo 'название страны: '    . $location->getCountryName() . '<br>'; // Россия
+                echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 1
+                echo 'регион: '             . $location->getRegionName() . '<br>';      // Москва
+                echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      //
+                echo 'округ: '              . $location->getDistrict() . '<br>';    // Центральный федеральный округ
+                echo 'широта: '             . $location->getLat() . '<br>';         // 55.755787
+                echo 'долгота: '            . $location->getLng() . '<br>';         // 37.617634
+                echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     // 5.255.252.0 - 5.255.255.255
+                echo 'сервис: '             . $location->getService() . '<br><br>';     // IpGeoBase
+            } else {
+                echo 'ошибка: '             . $location->getError() . '<br><br>';
+            }
+    
             $location->setLanguage('en');
             $location->reload('173.194.222.94'); // google.ru
     
-            echo 'ip: '                 . $location->getIp() . '<br>';          // 173.194.222.94
-            echo 'город: '              . $location->getCityName() . '<br>';        // Mountain View
-            echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // US
-            echo 'название страны: '    . $location->getCountryName() . '<br>'; // USA
-            echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 122
-            echo 'регион: '             . $location->getRegionName() . '<br>';      // California
-            echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      //
-            echo 'округ: '              . $location->getDistrict() . '<br>';    // US-CA
-            echo 'широта: '             . $location->getLat() . '<br>';         // 37.38605
-            echo 'долгота: '            . $location->getLng() . '<br>';         // -122.08385
-            echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     //
-            echo 'сервис: '             . $location->getService() . '<br>';     // Sypex
-            
+            if ($location->isSuccess())
+            {
+                echo 'ip: '                 . $location->getIp() . '<br>';          // 173.194.222.94
+                echo 'город: '              . $location->getCityName() . '<br>';        // Mountain View
+                echo 'iso-код страны: '     . $location->getCountryCode() . '<br>';     // US
+                echo 'название страны: '    . $location->getCountryName() . '<br>'; // USA
+                echo 'id страны в Битриксе: '    . $location->getCountryId() . '<br>'; // 122
+                echo 'регион: '             . $location->getRegionName() . '<br>';      // California
+                echo 'iso-код региона: '    . $location->getRegionCode() . '<br>';      //
+                echo 'округ: '              . $location->getDistrict() . '<br>';    // US-CA
+                echo 'широта: '             . $location->getLat() . '<br>';         // 37.38605
+                echo 'долгота: '            . $location->getLng() . '<br>';         // -122.08385
+                echo 'диапазон адресов: '   . $location->getInetnum() . '<br>';     //
+                echo 'сервис: '             . $location->getService() . '<br>';     // Sypex
+            } else {
+                echo 'ошибка: '             . $location->getError() . '<br><br>';
+            }
+    
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
-	} else 
+    } else
         echo 'Модуль GeoIp Api не установлен';
+		
+## Настройки
+
+### Указание сервера для Sypex
+
+    \Bitrix\Main\Config\Option::set('rover.geoip', 'sypex-server', 'ru3.sxgeo.city');
+    
+Список всех серверов https://sypexgeo.net/ru/api/
 		
 ## Компоненты
 

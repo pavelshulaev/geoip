@@ -158,6 +158,15 @@ class Location
 	}
 
     /**
+     * @return bool
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+	public function isSuccess()
+    {
+        return empty($this->getError());
+    }
+
+    /**
      * @param $field
      * @return mixed|null
      * @author Pavel Shulaev (https://rover-it.me)
