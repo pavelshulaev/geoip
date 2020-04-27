@@ -62,11 +62,12 @@ class Sypex extends Service
      */
     protected function parse($string, $language = LANGUAGE_ID)
     {
-        $rawData    = Json::decode($string);
+        $rawData    = json_decode($string, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);//Json::decode($string);
+
         $data       = array();
         $language   = strtolower(trim($language));
 
-        if (isset($rawData['error'])) {
+        if (!empty($rawData['error'])) {
             $data['ERROR'] = $rawData['error'];
         } else {
             $data[self::FIELD__CITY_NAME]   = isset($rawData['city']['name_' . $language]) ? $rawData['city']['name_' . $language] : '';

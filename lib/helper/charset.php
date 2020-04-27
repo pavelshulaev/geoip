@@ -28,7 +28,21 @@ class Charset
         if ($charsetFrom == $charsetTo)
             return $string;
 
-        return iconv($charsetFrom, $charsetTo, $string);
+        return iconv($charsetFrom, $charsetTo . '//IGNORE', $string);
+    }
+
+    /* Use it for json_encode some corrupt UTF-8 chars
+ * useful for = malformed utf-8 characters possibly incorrectly encoded by json_encode
+ */
+    public  static function convertArray( $data, $charsetTo, $charsetFrom ) {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = self::convertArray($value, $charsetTo, $charsetFrom);
+            }
+        } elseif (is_string($data)) {
+            return self::convert($charsetFrom, $charsetTo, $data);
+        }
+        return $data;
     }
 
     /**

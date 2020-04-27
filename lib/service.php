@@ -118,9 +118,12 @@ abstract class Service
     {
         if (is_null($this->data) || $reload) {
             $string = static::load();
-            $string = Charset::convert(static::getManifestField('charset'), $this->charset, $string);
+
+          //  $string = Charset::convert(static::getManifestField('charset'), $this->charset, $string);
 
             $data   = static::parse($string, $language);
+            $data   = Charset::convertArray($data, $this->charset, static::getManifestField('charset'));
+
             $data   = $this->addCountryData($data, $language);
 
             $data[self::FIELD__SERVICE] = static::getManifestField('name');
