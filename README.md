@@ -260,13 +260,22 @@
 
 ## Пожертвования
 
-> Если решение оказалось вам полезным, вы можете оставить пожертвование
+> Если решение оказалось вам полезным, вы можете поддержать его разрработку, а также другие бесплатные решения автора!
 
+<a href="https://yoomoney.ru/to/4100119592335831" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://rover-it.me/marketplace/icon-donate-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://rover-it.me/marketplace/icon-donate-light.svg">
+    <img src="https://rover-it.me/marketplace/icon-donate-light.svg" width="18" alt="Donate">
+  </picture>
+  Сделать пожертвование способ 1
+</a>
+&nbsp;
 <a href="https://pay.cloudtips.ru/p/dc96a2b8" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://rover-it.me/marketplace/icon-donate-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://rover-it.me/marketplace/icon-donate-light.svg">
     <img src="https://rover-it.me/marketplace/icon-donate-light.svg" width="18" alt="Donate">
   </picture>
-  Сделать пожертвование
+  Сделать пожертвование способ 2
 </a>
