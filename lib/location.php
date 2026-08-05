@@ -1,5 +1,7 @@
 <?php
+
 namespace Rover\GeoIp;
+
 /**
  * Created by PhpStorm.
  * User: lenovo
@@ -8,11 +10,14 @@ namespace Rover\GeoIp;
  *
  * @author Pavel Shulaev (https://rover-it.me)
  */
+
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Service\GeoIp\Manager;
 use Bitrix\Main\SystemException;
-use Rover\GeoIp\Helper\Charset;
 use Rover\GeoIp\Helper\Ip;
+use Rover\GeoIp\Helper\Tools;
 
 Loc::LoadMessages(__FILE__);
 
@@ -21,71 +26,74 @@ Loc::LoadMessages(__FILE__);
  *
  * @package Rover\Geoip
  * @author  Shulaev (pavel.shulaev@gmail.com)
+ * @method getIp
+ * @method getCityName
+ * @method getCountryCode
+ * @method getCountryName
+ * @method getCountryId
+ * @method getRegionName
+ * @method getRegionCode
+ * @method getDistrict
+ * @method getLat
+ * @method getLng
+ * @method getInetnum
+ * @method getServiceName
+ * @method getError
  */
 class Location
 {
-	/** @var array */
-	protected static $instances = array();
-
-	/** @var array */
-	protected $data;
-
-    /** @var string */
-	protected $ip;
-
-    /** @var string */
-	protected $charset;
-
-    /** @var string */
-	protected $service;
-
-	/** @var string */
-	protected $language;
-
-	/** @var boolean */
-	protected $isBot;
+    protected static array $instances = [];
+    protected array        $data;
+    protected string       $ip;
+    protected string       $charset;
+    protected string       $serviceName;
+    protected string       $language;
+    protected bool         $isBot;
 
     /**
-     * Location constructor.
-     *
-     * @param        $ip
-     * @param        $charset
-     * @param string $service
+     * @param string $ip
+     * @param string $charset
+     * @param string $serviceName
      * @param string $language
      * @throws ArgumentOutOfRangeException
      */
-    private function __construct($ip, $charset, $service = '', $language = LANGUAGE_ID)
+    private function __construct(string $ip, string $charset = LANG_CHARSET, string $serviceName = '',
+        string $language = LANGUAGE_ID)
     {
-        if (!Ip::isValid($ip))
+        if (!Ip::isValid($ip)) {
             throw new ArgumentOutOfRangeException('ip');
+        }
 
-        $this->ip       = $ip;
-        $this->charset  = Charset::prepare($charset);
-        $this->service  = trim($service);
-        $this->language = $language;
-        $this->isBot    = preg_match(
+        $this->ip          = $ip;
+        $this->charset     = trim($charset);
+        $this->serviceName = trim($serviceName);
+        $this->language    = $language;
+        $this->isBot       = preg_match(
             "~(Google|Yahoo|Rambler|Bot|Yandex|Spider|Snoopy|Crawler|Finder|Mail|curl)~i",
-            $_SERVER['HTTP_USER_AGENT']
+            (string)(Context::getCurrent()->getServer()->getUserAgent() ?? '')
         );
     }
 
     /**
-     * @param string       $ip
-     * @param string       $charset
-     * @param string       $service
-     * @param mixed|string $language
+     * @param string $ip
+     * @param string $charset
+     * @param string $service
+     * @param string $language
      * @return Location
      * @throws ArgumentOutOfRangeException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function getInstance($ip = '', $charset = Charset::AUTO, $service = '', $language = LANGUAGE_ID)
+    public static function getInstance(string $ip = '', string $charset = LANG_CHARSET, string $service = '',
+        string $language = LANGUAGE_ID): Location
     {
         $ip = trim($ip);
-        if (!strlen($ip))
-            $ip = Ip::getCur();
+        if (!mb_strlen($ip)) {
+            $ip = Manager::getRealIp();
+        }
 
-        if (!isset(self::$instances[$ip]))
+        if (!isset(self::$instances[$ip])) {
             self::$instances[$ip] = new self($ip, $charset, $service, $language);
+        }
 
         return self::$instances[$ip];
     }
@@ -94,12 +102,12 @@ class Location
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function loadData()
+    protected function loadData(): void
     {
         // info in cookie
-        if (Cookie::checkIp($this->ip))
-        {
+        if (Cookie::checkIp($this->ip)) {
             $this->data = Cookie::get();
+
             return;
         }
 
@@ -107,28 +115,38 @@ class Location
     }
 
     /**
-     * @param $ip
+     * @param string $ip
      * @return $this
      * @throws SystemException
+     * @throws ArgumentOutOfRangeException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function reload($ip = '')
+    public function reload(string $ip = ''): Location
     {
-        if ($this->isBot) {
-            $this->data = array(
-                'ERROR' => 'Bot query'
-            );
-        } else {
-            $ip = trim($ip);
-            if (!strlen($ip))
-                $ip = $this->ip;
+        $ip = trim($ip);
+        if (!mb_strlen($ip)) {
+            $ip = $this->ip;
+        } elseif ($ip !== $this->ip) {
+            if (isset(self::$instances[$this->ip]) && self::$instances[$this->ip] === $this) {
+                unset(self::$instances[$this->ip]);
+            }
 
-            $service = strlen($this->service)
-                ? ServiceContainer::getByName($this->service, $ip, $this->charset)
+            $this->ip              = $ip;
+            self::$instances[$ip] = $this;
+        }
+
+        if (!Ip::isValid($ip)) {
+            $this->data = ['error' => 'invalid ip'];
+        } elseif ($this->isBot) {
+            $this->data = ['error' => 'Bot query'];
+        } else {
+            $service = mb_strlen($this->serviceName)
+                ? ServiceContainer::getByName($this->serviceName, $ip, $this->charset)
                 : ServiceContainer::getFirstValidService($ip, $this->charset);
 
-            if (!$service instanceof Service)
+            if (!$service instanceof Service) {
                 throw new SystemException('valid service not found');
+            }
 
             $this->data = $service->getData($this->language, true);
 
@@ -139,29 +157,30 @@ class Location
     }
 
     /**
-     * @return array|mixed|null
+     * @return array
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function getData()
-	{
-	    // first request
-	    if (is_null($this->data))
-            try{
+    public function getData(): array
+    {
+        // first request
+        if (!isset($this->data)) {
+            try {
                 $this->loadData();
-            } catch (\Exception $e) {
-                $this->data = array(
-                    'ERROR' => $e->getMessage()
-                );
+            } catch (\Throwable $e) {
+                $this->data = [
+                    'error' => $e->getMessage()
+                ];
             }
+        }
 
         return $this->data;
-	}
+    }
 
     /**
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function isSuccess()
+    public function isSuccess(): bool
     {
         return empty($this->getError());
     }
@@ -171,177 +190,49 @@ class Location
      * @return mixed|null
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function getField($field)
+    public function getField($field): mixed
     {
-        $data   = $this->getData();
-        $field  = trim($field);
+        $field = trim($field);
 
-        if (strlen($field) && isset($data[$field]) )
-            return $data[$field];
+        if (mb_strlen($field)) {
+            return $this->getData()[$field] ?? null;
+        }
 
         return null;
     }
 
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getIp()
-	{
-		return $this->getField(Service::FIELD__IP);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-     * @deprecated use getCityName
-	 */
-	public function getCity()
-	{
-		return $this->getField(Service::FIELD__CITY_NAME);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getCityName()
-	{
-		return $this->getField(Service::FIELD__CITY_NAME);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-     * @deprecated
-	 */
-	public function getCountry()
-	{
-		return $this->getField(Service::FIELD__COUNTRY_CODE);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getCountryCode()
-	{
-		return $this->getField(Service::FIELD__COUNTRY_CODE);
-	}
-
     /**
-     * @return array|mixed|null
-     * @author Pavel Shulaev (https://rover-it.me)
-     */
-	public function getCountryName()
-	{
-	    return $this->getField(Service::FIELD__COUNTRY_NAME);
-	}
-
-    /**
-     * @return null
-     * @author Pavel Shulaev (https://rover-it.me)
-     */
-	public function getCountryId()
-    {
-        return $this->getField(Service::FIELD__COUNTRY_ID);
-    }
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-     * @deprecated use getRegionName
-	 */
-	public function getRegion()
-	{
-		return $this->getField(Service::FIELD__REGION_NAME);
-	}
-
-    /**
+     * @param $methodName
+     * @param $arguments
      * @return mixed|null
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function getRegionName()
-	{
-		return $this->getField(Service::FIELD__REGION_NAME);
-	}
-
-    /**
-     * @return mixed|null
-     * @author Pavel Shulaev (https://rover-it.me)
-     */
-	public function getRegionCode()
-	{
-		return $this->getField(Service::FIELD__REGION_CODE);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getDistrict()
-	{
-		return $this->getField(Service::FIELD__DISTRICT);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getLat()
-	{
-		return $this->getField(Service::FIELD__LAT);
-	}
-
-	/**
-	 * @return array
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getLng()
-	{
-		return $this->getField(Service::FIELD__LNG);
-	}
-
-	/**
-	 * @return mixed
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public function getInetnum()
-	{
-		return $this->getField(Service::FIELD__INETNUM);
-	}
-
-    /**
-     * @return string
-     * @author Pavel Shulaev (https://rover-it.me)
-     */
-	public function getService()
+    public function __call($methodName, $arguments)
     {
-        return $this->getField(Service::FIELD__SERVICE);
+        if (mb_strpos($methodName, 'get') === false) {
+            return null;
+        }
+
+        $fieldName = mb_substr($methodName, 3);
+        $fieldName = Tools::fromCamelCase($fieldName);
+
+        return $this->getField($fieldName);
     }
 
     /**
-     * @return mixed|null
+     * @return string|null
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function getError()
+    public static function getCurIp(): ?string
     {
-        return $this->getField('ERROR');
+        return Manager::getRealIp();
     }
 
     /**
-     * @return bool
+     * @return string|null
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public static function getCurIp()
-    {
-        return Ip::getCur();
-    }
-
-    /**
-     * @return string
-     */
-    public function getLanguage()
+    public function getLanguage(): ?string
     {
         return $this->language;
     }
@@ -349,8 +240,38 @@ class Location
     /**
      * @param string $language
      */
-    public function setLanguage($language)
+    public function setLanguage(string $language): void
     {
         $this->language = $language;
+    }
+
+    /**
+     * @return mixed
+     * @author     Pavel Shulaev (https://rover-it.me)
+     * @deprecated use getCityName
+     */
+    public function getCity(): string
+    {
+        return $this->getField(Service::CITY_NAME);
+    }
+
+    /**
+     * @return mixed
+     * @author Pavel Shulaev (https://rover-it.me)
+     * @deprecated
+     */
+    public function getCountry(): string
+    {
+        return $this->getField(Service::COUNTRY_CODE);
+    }
+
+    /**
+     * @return mixed
+     * @author     Pavel Shulaev (https://rover-it.me)
+     * @deprecated use getRegionName
+     */
+    public function getRegion(): string
+    {
+        return $this->getField(Service::REGION_NAME);
     }
 }

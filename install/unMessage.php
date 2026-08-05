@@ -18,7 +18,7 @@ else
 
 
 ?>
-<form action="<?echo $APPLICATION->GetCurPage()?>">
+<form action="<?php echo $APPLICATION->GetCurPage()?>">
     <input type="hidden" name="lang" value="<?=LANG?>">
     <input type="submit" name="" value="<?=Loc::getMessage("MOD_BACK")?>">
 <form>

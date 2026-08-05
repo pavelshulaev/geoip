@@ -8,13 +8,17 @@
  *
  * @author Shulaev (pavel.shulaev@gmail.com)
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
-use \Bitrix\Main;
-use \Bitrix\Main\Localization\Loc as Loc;
-use \Bitrix\Main\ArgumentNullException;
-use \Rover\GeoIp\Location;
-use \Rover\GeoIp\Service;
+use Bitrix\Main;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\Localization\Loc as Loc;
+use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Statistic\SessionTable;
+use Rover\GeoIp\Location;
+use Rover\GeoIp\Service;
 
 /**
  * Class RoverSlider
@@ -23,23 +27,30 @@ use \Rover\GeoIp\Service;
  */
 class GeoIpUserLocation extends CBitrixComponent
 {
-    /**
-     * @var
-     */
-    protected $fields;
+    protected array $fields;
 
     const INPUT__USER   = 'user';
     const INPUT__SELECT = 'select';
     const INPUT__SUBMIT = 'submit';
-	
+
+    protected static array $allowedCityFields    = [
+        'PERSONAL_CITY', 'WORK_CITY'
+    ];
+    protected static array $allowedStateFields   = [
+        'PERSONAL_STATE', 'WORK_STATE'
+    ];
+    protected static array $allowedCountryFields = [
+        'PERSONAL_COUNTRY', 'WORK_COUNTRY'
+    ];
+
     /**
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function onIncludeComponentLang()
-	{
-		$this->includeComponentLang(basename(__FILE__));
-		Loc::loadMessages(__FILE__);
-	}
+    public function onIncludeComponentLang()
+    {
+        $this->includeComponentLang(basename(__FILE__));
+        Loc::loadMessages(__FILE__);
+    }
 
     /**
      * @param $params
@@ -48,10 +59,14 @@ class GeoIpUserLocation extends CBitrixComponent
      */
     public function onPrepareComponentParams($params)
     {
-
         $params['PAGE_SIZE'] = intval($params['PAGE_SIZE']);
-        if ($params['PAGE_SIZE'] <= 0)
+        if ($params['PAGE_SIZE'] <= 0) {
             $params['PAGE_SIZE'] = 20;
+        }
+
+        $params['CITY_FIELDS']    = array_intersect($params['CITY_FIELDS'] ?? [], self::$allowedCityFields);
+        $params['STATE_FIELDS']   = array_intersect($params['STATE_FIELDS'] ?? [], self::$allowedStateFields);
+        $params['COUNTRY_FIELDS'] = array_intersect($params['COUNTRY_FIELDS'] ?? [], self::$allowedCountryFields);
 
         return $params;
     }
@@ -63,75 +78,86 @@ class GeoIpUserLocation extends CBitrixComponent
      */
     protected function checkParams()
     {
-        if (!Main\Loader::includeModule('rover.geoip'))
-            throw new Main\SystemException(Loc::getMessage('rover-geoip__no-geoip-module'));
+        global $USER;
 
-        if (!Main\Loader::includeModule('statistic'))
+        if (!$USER->IsAdmin()) {
+            throw new Main\SystemException(Loc::getMessage('rover-geoip__access-denied'));
+        }
+
+        if (!Main\Loader::includeModule('rover.geoip')) {
+            throw new Main\SystemException(Loc::getMessage('rover-geoip__no-geoip-module'));
+        }
+
+        if (!Main\Loader::includeModule('statistic')) {
             throw new Main\SystemException(Loc::getMessage('rover-geoip__no-statistic-module'));
+        }
     }
 
     /**
      * @return array
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function getSelect()
+    protected function getSelect(): array
     {
-        return array_unique(array_merge(array('ID', 'NAME', 'LAST_NAME'), $this->getFields()));
+        return array_unique(array_merge(['ID', 'NAME', 'LAST_NAME'], $this->getFields()));
     }
 
     /**
      * @return Main\DB\Result
      * @throws Main\ArgumentException
-     * @throws Main\ObjectPropertyException
+     * @throws Main\ObjectPropertyException|Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function getUsersRaw()
-	{
-        $nav = new \Bitrix\Main\UI\PageNavigation("nav-users");
+    protected function getUsersRaw(): Main\DB\Result
+    {
+        $nav = new PageNavigation("nav-users");
         $nav->allowAllRecords(false)
             ->setPageSize($this->arParams['PAGE_SIZE'])
             ->initFromUri();
 
-	    $query  = array(
-	        'select'        => $this->getSelect(),
-            "count_total"   => true,
-            'offset'        => $nav->getOffset(),
-            'limit'         => $nav->getLimit(),
-            'order'         => array('ID' => 'DESC')
-        );
+        $query = [
+            'select'      => $this->getSelect(),
+            "count_total" => true,
+            'offset'      => $nav->getOffset(),
+            'limit'       => $nav->getLimit(),
+            'order'       => ['ID' => 'DESC']
+        ];
 
-	    $users = Main\UserTable::getList($query);
+        $users = Main\UserTable::getList($query);
         $nav->setRecordCount($users->getCount());
         $this->arResult['NAV'] = $nav;
 
-	    return $users;
-	}
+        return $users;
+    }
 
     /**
      * @param          $user
      * @param Location $location
      * @return mixed
      * @throws ArgumentNullException
-     * @throws Main\Db\SqlQueryException
+     * @throws Main\ArgumentException
+     * @throws Main\ObjectPropertyException
+     * @throws Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function addLocation($user, Location $location)
+    protected function addLocation($user, Location $location): array
     {
         $regIp = $this->getRegIp($user['ID']);
-        if (!$regIp)
+        if (!$regIp) {
             return $user;
+        }
 
         $user['REG_IP'] = $regIp;
 
-        try{
+        try {
             $location->reload($regIp);
         } catch (\Exception $e) {
             return $user;
         }
 
-        $user = $this->addFields($user, $location, 'CITY_FIELDS', Service::FIELD__CITY_NAME);
-        $user = $this->addFields($user, $location, 'STATE_FIELDS', Service::FIELD__REGION_NAME);
-        $user = $this->addFields($user, $location, 'COUNTRY_FIELDS', Service::FIELD__COUNTRY_ID);
+        $user = $this->addFields($user, $location, 'CITY_FIELDS', Service::CITY_NAME);
+        $user = $this->addFields($user, $location, 'STATE_FIELDS', Service::REGION_NAME);
+        $user = $this->addFields($user, $location, 'COUNTRY_FIELDS', Service::COUNTRY_ID);
 
         return $user;
     }
@@ -140,21 +166,17 @@ class GeoIpUserLocation extends CBitrixComponent
      * @return array
      * @throws ArgumentNullException
      * @throws Main\ArgumentException
-     * @throws Main\Db\SqlQueryException
-     * @throws Main\ObjectPropertyException
+     * @throws Main\ObjectPropertyException|Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function getUsers()
+    protected function getUsers(): array
     {
-        $users      = $this->getUsersRaw();
-        $location   = Location::getInstance();
-        $result     = array();
+        $users    = $this->getUsersRaw();
+        $location = Location::getInstance();
+        $result   = [];
 
-        while ($user = $users->fetch())
-        {
-            if ($location instanceof Location)
-                $user = $this->addLocation($user, $location);
-
+        while ($user = $users->fetch()) {
+            $user     = $this->addLocation($user, $location);
             $result[] = $user;
         }
 
@@ -165,19 +187,21 @@ class GeoIpUserLocation extends CBitrixComponent
      * @return array
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function getFields()
+    protected function getFields(): array
     {
-        if (is_null($this->fields)) {
-            $fields = array_merge($this->arParams['CITY_FIELDS'],
-                $this->arParams['STATE_FIELDS'],
-                $this->arParams['COUNTRY_FIELDS']);
+        if (!isset($this->fields)) {
+            $fields = array_merge(
+                $this->arParams['CITY_FIELDS'] ?? [],
+                $this->arParams['STATE_FIELDS'] ?? [],
+                $this->arParams['COUNTRY_FIELDS'] ?? []);
 
-            $this->fields = array();
+            $this->fields = [];
 
             foreach ($fields as $field) {
                 $field = trim($field);
-                if (!strlen($field))
+                if (!strlen($field)) {
                     continue;
+                }
 
                 $this->fields[] = $field;
             }
@@ -190,110 +214,135 @@ class GeoIpUserLocation extends CBitrixComponent
      * @throws Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function update()
+    protected function update(): void
     {
-        if (!$this->request->getPost(self::INPUT__SUBMIT))
+        if (!$this->request->getPost(self::INPUT__SUBMIT) || !check_bitrix_sessid()) {
             return;
-
-        $userHandler= new CUser();
-        $selected   = array_keys($this->request->getPost(self::INPUT__SELECT));
-        $users      = $this->request->getPost(self::INPUT__USER);
-
-        foreach ($selected as $userId)
-        {
-            if (!isset($users[$userId]))
-                continue;
-
-            if (!$userHandler->Update($userId, $users[$userId]))
-                throw new Main\SystemException($userHandler->LAST_ERROR);
         }
+
+        $cUser    = new CUser();
+        $selected = array_keys($this->request->getPost(self::INPUT__SELECT));
+        $users    = $this->request->getPost(self::INPUT__USER);
+
+        foreach ($selected as $userId) {
+            $userId = intval($userId);
+
+            if (!isset($users[$userId])) {
+                continue;
+            }
+
+            foreach ($users[$userId] as $field => $value) {
+                if (!in_array($field,
+                    array_merge(self::$allowedCityFields, self::$allowedStateFields, self::$allowedCountryFields))) {
+                    unset($users[$userId][$field]);
+                }
+            }
+
+            if (empty($users[$userId])) {
+                continue;
+            }
+
+            if (!$cUser->Update($userId, $users[$userId])) {
+                throw new Main\SystemException($cUser->LAST_ERROR);
+            }
+        }
+        $this->arResult['MESSAGE_CODE'] = 'updated';
     }
 
     /**
      * @throws Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function getResult()
-	{
-	    $this->arResult['USERS']            = $this->getUsers();
-	    $this->arResult['FIELDS']           = $this->getSelect();
-	    $this->arResult['LOCATION_FIELDS']  = $this->getFields();
-	    $this->arResult['COUNTRIES']        = $this->getCountries();
-	}
+    protected function getResult(): void
+    {
+        $this->arResult['USERS']           = $this->getUsers();
+        $this->arResult['FIELDS']          = $this->getSelect();
+        $this->arResult['LOCATION_FIELDS'] = $this->getFields();
+        $this->arResult['COUNTRIES']       = $this->getCountries();
+    }
 
     /**
      * @return array
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function getCountries()
+    protected function getCountries(): array
     {
-        $result     = array();
-        $countries  = GetCountryArray();
+        $result    = [];
+        $countries = GetCountryArray();
 
-        foreach ($countries['reference_id'] as $countryPos => $countryId)
-            if (isset($countries['reference'][$countryPos]))
+        foreach ($countries['reference_id'] as $countryPos => $countryId) {
+            if (isset($countries['reference'][$countryPos])) {
                 $result[$countryId] = $countries['reference'][$countryPos];
+            }
+        }
 
         asort($result);
 
         $russia = $result[1];
         unset($result[1]);
-        $result = array(0 => '-', 1 => $russia) + $result;
+        $result = [0 => '-', 1 => $russia] + $result;
 
         return $result;
     }
+
     /**
-     * @param          $user
+     * @param array $user
      * @param Location $location
-     * @param          $fieldType
-     * @param          $locationType
+     * @param string $fieldType
+     * @param string $locationType
      * @return mixed
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function addFields($user, Location $location, $fieldType, $locationType)
+    protected function addFields(array $user, Location $location, string $fieldType, string $locationType): array
     {
         $fieldType = trim($fieldType);
-        if (!$fieldType)
+        if (!$fieldType) {
             return $user;
+        }
 
         $locationType = trim($locationType);
-        if (!strlen($locationType))
+        if (!strlen($locationType)) {
             return $user;
+        }
 
-        if (!isset($this->arParams[$fieldType]))
+        if (!isset($this->arParams[$fieldType])) {
             return $user;
+        }
 
-        foreach ($this->arParams[$fieldType] as $field)
+        foreach ($this->arParams[$fieldType] as $field) {
             $user['~' . $field] = $location->getField($locationType);
+        }
 
         return $user;
     }
 
     /**
      * @param $userId
-     * @return null
+     * @return string|null
      * @throws ArgumentNullException
-     * @throws Main\Db\SqlQueryException
+     * @throws Main\ArgumentException
+     * @throws Main\ObjectPropertyException
+     * @throws Main\SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function getRegIp($userId)
+    protected function getRegIp(int $userId): ?string
     {
-        $userId = intval($userId);
-        if (!$userId)
+        if (!$userId) {
             throw new ArgumentNullException('userId');
+        }
 
-        $connection = Main\Application::getConnection();
-        $sqlHelper  = $connection->getSqlHelper();
+        if (!Main\Loader::includeModule('statistic')) {
+            return null;
+        }
 
-        $sql = 'SELECT IP_LAST FROM b_stat_session WHERE USER_ID=' . $sqlHelper->forSql($userId)
-            . ' ORDER BY DATE_FIRST ASC LIMIT 1';
+        $session = SessionTable::getList([
+            'select' => ['IP_LAST'],
+            'filter' => ['=USER_ID' => $userId],
+            'order'  => ['DATE_FIRST' => 'ASC'],
+            'limit'  => 1,
+        ])->fetch();
 
-        $result = $connection->query($sql)->fetch();
-
-        if (isset($result['IP_LAST']))
-            return $result['IP_LAST'];
-
-        return null;
+        return $session['IP_LAST'] ?? null;
     }
 
     /**
@@ -301,30 +350,32 @@ class GeoIpUserLocation extends CBitrixComponent
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function checkUserFields($user)
+    protected function checkUserFields($user)
     {
         $fields = $this->getFields();
 
-        foreach ($fields as $field)
-            if (!isset($user[$field]))
+        foreach ($fields as $field) {
+            if (!isset($user[$field])) {
                 return false;
+            }
+        }
 
         return true;
     }
 
-	/**
-	 * @author Shulaev (pavel.shulaev@gmail.com)
-	 */
-	public function executeComponent()
-	{
+    /**
+     * @author Shulaev (pavel.shulaev@gmail.com)
+     */
+    public function executeComponent()
+    {
         try {
             $this->setFrameMode(true);
             $this->checkParams();
             $this->update();
             $this->getResult();
             $this->includeComponentTemplate();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             ShowError($e->getMessage());
         }
-	}
+    }
 }

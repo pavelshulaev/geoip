@@ -10,7 +10,7 @@
 
 namespace Rover\GeoIp\Helper;
 
-use Bitrix\Main\Application;
+use Bitrix\Main\Service\GeoIp\Manager;
 
 /**
  * Class Ip
@@ -21,32 +21,13 @@ use Bitrix\Main\Application;
 class Ip
 {
     /**
-     * @return bool
+     * @return string|null
      * @author Pavel Shulaev (https://rover-it.me)
+     * @deprecated
      */
-    public static function getCur()
+    public static function getCur(): ?string
     {
-        $ips    = array();
-        $server = Application::getInstance()
-            ->getContext()->getServer();
-
-        if ($server->get('HTTP_X_FORWARDED_FOR'))
-            $ips[] = trim(strtok($server->get('HTTP_X_FORWARDED_FOR'), ','));
-
-        if ($server->get('HTTP_CLIENT_IP'))
-            $ips[] = $server->get('HTTP_CLIENT_IP');
-
-        if ($server->get('REMOTE_ADDR'))
-            $ips[] = $server->get('REMOTE_ADDR');
-
-        if ($server->get('HTTP_X_REAL_IP'))
-            $ips[] = $server->get('HTTP_X_REAL_IP');
-
-        foreach($ips as $ip)
-            if(self::isValid($ip))
-                return $ip;
-
-        return false;
+        return Manager::getRealIp();
     }
 
     /**
@@ -54,9 +35,11 @@ class Ip
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function isV4($ip)
+    public static function isV4($ip): bool
     {
-        return (bool)preg_match("#^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$#", $ip);
+        return filter_var($ip, FILTER_VALIDATE_IP,
+            FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+
     }
 
     /**
@@ -64,9 +47,10 @@ class Ip
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function isV6($ip)
+    public static function isV6($ip): bool
     {
-        return (bool)preg_match("#((^|:)([0-9a-fA-F]{0,4})){1,8}$#", $ip);
+        return filter_var($ip, FILTER_VALIDATE_IP,
+            FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
 
     /**
@@ -74,7 +58,7 @@ class Ip
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function isValid($ip)
+    public static function isValid($ip): bool
     {
         return self::isV4($ip) || self::isV6($ip);
     }

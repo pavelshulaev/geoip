@@ -1,10 +1,16 @@
 <?php
+
 namespace Rover\GeoIp;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\SystemException;
-use Rover\GeoIp\Helper\Charset;
+use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Web\HttpClient;
 use Rover\GeoIp\Helper\Ip;
+use Throwable;
 
 /**
  * Created by PhpStorm.
@@ -16,79 +22,89 @@ use Rover\GeoIp\Helper\Ip;
  */
 abstract class Service
 {
-    const FIELD__IP             = 'ip';
-    const FIELD__CITY_NAME      = 'city_name';
-    const FIELD__REGION_CODE    = 'region_code';
-    const FIELD__REGION_NAME    = 'region_name';
-    const FIELD__COUNTRY_CODE   = 'country_code';
-    const FIELD__COUNTRY_NAME   = 'country_name';
-    const FIELD__COUNTRY_ID     = 'country_id';
-    const FIELD__DISTRICT       = 'district';
-    const FIELD__LAT            = 'lat';
-    const FIELD__LNG            = 'lng';
-    const FIELD__INETNUM        = 'inetnum';
-    const FIELD__SERVICE        = 'service';
-    const FIELD__MESSAGE        = 'message';
-    const FIELD__ZIP_CODE       = 'zip_code';
-    const FIELD__METRO_CODE     = 'metro_code';
+    const IP           = 'ip';
+    const CITY_NAME    = 'city_name';
+    const REGION_CODE  = 'region_code';
+    const REGION_NAME  = 'region_name';
+    const COUNTRY_CODE = 'country_code';
+    const COUNTRY_NAME = 'country_name';
+    const COUNTRY_ID   = 'country_id';
+    const DISTRICT     = 'district';
+    const LAT          = 'lat';
+    const LNG          = 'lng';
+    const INETNUM      = 'inetnum';
+    const SERVICE_NAME = 'service_name';
+    const MESSAGE      = 'message';
+    const ZIP_CODE     = 'zip_code';
+    const METRO_CODE   = 'metro_code';
 
-    /** @var string */
-	protected $ip;
+    const UTF_8        = 'utf-8';
+    const WINDOWS_1251 = 'windows-1251';
 
-    /** @var string */
-	protected $charset;
-
-    /** @var array */
-	protected $data;
+    protected string $ip;
+    protected string $charset;
+    protected array  $data;
 
     /**
      * Service constructor.
      *
-     * @param      $ip
-     * @param null $charset
+     * @param string $ip
+     * @param string $charset
      * @throws ArgumentOutOfRangeException
      */
-    public function __construct($ip, $charset = null)
+    public function __construct(string $ip, string $charset = LANG_CHARSET)
     {
-        if (!Ip::isV4($ip))
+        if (!Ip::isV4($ip)) {
             throw new ArgumentOutOfRangeException('ip');
+        }
 
         $this->ip      = $ip;
-        $this->charset = Charset::prepare($charset);
+        $this->charset = trim($charset);
     }
 
     /**
      * @return mixed
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	abstract public function isActive();
+    abstract public function isActive(): bool;
 
     /**
-     * @param        $string
+     * @param string $string
      * @param string $language
      * @return mixed
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	abstract protected function parse($string, $language = LANGUAGE_ID);
+    abstract protected function parse(string $string, string $language = LANGUAGE_ID);
 
     /**
      * @return mixed
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	abstract public function getManifest();
+    abstract public function getManifest();
 
     /**
      * @param string $language
-     * @param bool   $reload
+     * @param bool $reload
      * @return array
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public function getData($language = LANGUAGE_ID, $reload = false)
+    public function getData(string $language = LANGUAGE_ID, bool $reload = false): array
     {
         $this->loadData($language, $reload);
 
         return $this->data;
+    }
+
+    /**
+     * @return string
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public static function getName(): string
+    {
+        $className = get_called_class();
+
+        return basename(str_replace('\\', '/', $className));
     }
 
     /**
@@ -97,109 +113,113 @@ abstract class Service
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function getManifestField($field)
+    public function getManifestField($field): string
     {
-        $field      = trim($field);
-        $manifest   = static::getManifest();
+        $field    = trim($field);
+        $manifest = static::getManifest();
 
-        if (strlen($field) && isset($manifest[$field]))
+        if (strlen($field) && isset($manifest[$field])) {
             return $manifest[$field];
+        }
 
         throw new SystemException('Field "' . $field . '"" not found in the manifest');
     }
 
     /**
      * @param string $language
-     * @param bool   $reload
+     * @param bool $reload
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function loadData($language = LANGUAGE_ID, $reload = false)
+    protected function loadData(string $language = LANGUAGE_ID, bool $reload = false): void
     {
-        if (is_null($this->data) || $reload) {
+        if (!isset($this->data) || $reload) {
             $string = static::load();
-            $string = Charset::convert(static::getManifestField('charset'), $this->charset, $string);
-
             $data   = static::parse($string, $language);
-            $data   = $this->addCountryData($data, $language);
+            $data   = Encoding::convertEncoding($data, static::getManifestField('charset'), $this->charset);
 
-            $data[self::FIELD__SERVICE] = static::getManifestField('name');
-            $data[self::FIELD__IP]      = $this->ip;
+            $data = $this->addCountryData($data, $language);
+
+            $data[self::SERVICE_NAME] = static::getName();
+            $data[self::IP]           = $this->ip;
 
             $this->data = $data;
         }
     }
 
     /**
-     * @param              $data
+     * @param array $data
      * @param mixed|string $language
-     * @return mixed
+     * @return array
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function addCountryData($data, $language = LANGUAGE_ID)
+    protected function addCountryData(array $data, string $language = LANGUAGE_ID): array
     {
-        $data[self::FIELD__COUNTRY_NAME]    = null;
-        $data[self::FIELD__COUNTRY_ID]      = null;
+        $data[self::COUNTRY_NAME] = null;
+        $data[self::COUNTRY_ID]   = null;
 
-        if (!$data[self::FIELD__COUNTRY_CODE])
+        if (!$data[self::COUNTRY_CODE]) {
             return $data;
+        }
 
-        $data[self::FIELD__COUNTRY_ID] = GetCountryIdByCode(strtoupper($data[self::FIELD__COUNTRY_CODE]));
+        $data[self::COUNTRY_ID] = GetCountryIdByCode(strtoupper($data[self::COUNTRY_CODE]));
 
-        if ($data[self::FIELD__COUNTRY_ID])
-            $data[self::FIELD__COUNTRY_NAME] = GetCountryByID($data[self::FIELD__COUNTRY_ID], $language);
+        if ($data[self::COUNTRY_ID]) {
+            $data[self::COUNTRY_NAME] = GetCountryByID($data[self::COUNTRY_ID], $language);
+        }
 
         return $data;
     }
 
     /**
-     * @return mixed
+     * @return string
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	protected function load()
-	{
-		$ch = curl_init();
+    protected function load(): string
+    {
 
-		curl_setopt($ch, CURLOPT_URL, static::getManifestField('url'));
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        $httpClient = new HttpClient();
+        $httpClient->setTimeout(Option::get('rover.geoip', 'curl-timeout', 200));
+        $httpClient->get(static::getManifestField('url'));
 
-		return curl_exec($ch);
-	}
+        return $httpClient->getResult();
+    }
 
     /**
      * @param $ip
      * @param $charset
      * @return Service[]
-     * @throws ArgumentOutOfRangeException
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function getList($ip, $charset)
+    public static function getList($ip, $charset): array
     {
-        $list   = array();
-        $patches= glob(dirname(__FILE__) . '/service/*');
+        $list = [];
 
-        foreach ($patches as $patch) {
-            $name       = basename($patch, '.php');
+        foreach (self::getClassNames($ip, $charset) as $className) {
+            try {
+                $service = self::build($className, $ip, $charset);
+            } catch (Throwable $e) {
+                continue;
+            }
 
-            $service = self::build($name, $ip, $charset);
-
-            if ($service->isActive())
+            if ($service->isActive()) {
                 $list[] = $service;
+            }
         }
 
-        uasort($list, function(Service $service1, Service $service2) {
+        uasort($list, function (Service $service1, Service $service2) {
             $sort1 = $service1->getManifestField('sort');
             $sort2 = $service2->getManifestField('sort');
 
-            if ($sort1 < $sort2)
+            if ($sort1 < $sort2) {
                 return -1;
+            }
 
-            if ($sort1 > $sort2)
+            if ($sort1 > $sort2) {
                 return 1;
+            }
 
             return 0;
         });
@@ -208,25 +228,49 @@ abstract class Service
     }
 
     /**
-     * @param $name
+     * Collects geoip service class names registered via the "onBuildServiceList" event.
+     *
      * @param $ip
      * @param $charset
-     * @return mixed
+     * @return string[]
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    protected static function getClassNames($ip, $charset): array
+    {
+        $classNames = [];
+
+        $event = new Event('rover.geoip', 'onBuildServiceList', ['ip' => $ip, 'charset' => $charset]);
+        $event->send();
+
+        foreach ($event->getResults() as $eventResult) {
+            if ($eventResult->getType() !== EventResult::SUCCESS) {
+                continue;
+            }
+
+            $parameters = $eventResult->getParameters();
+            if (!empty($parameters['services']) && is_array($parameters['services'])) {
+                $classNames = array_merge($classNames, $parameters['services']);
+            }
+        }
+
+        return array_unique($classNames);
+    }
+
+    /**
+     * @param string $className fully qualified name of a class extending Service
+     * @param $ip
+     * @param $charset
+     * @return Service
      * @throws ArgumentOutOfRangeException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function build($name, $ip, $charset)
+    public static function build(string $className, $ip, $charset): Service
     {
-        $className  = '\\Rover\\GeoIp\\Service\\' . $name;
-
-        if (!class_exists($className))
+        if (!class_exists($className) || !is_subclass_of($className, self::class)) {
             throw new ArgumentOutOfRangeException('className');
+        }
 
-        $service = new $className($ip, $charset);
-        if (!$service instanceof self)
-            throw new ArgumentOutOfRangeException('className');
-
-        return $service;
+        return new $className($ip, $charset);
     }
 
     /**
@@ -234,10 +278,10 @@ abstract class Service
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function isValid()
+    public function isValid(): bool
     {
         $data = $this->getData();
 
-        return isset($data[self::FIELD__COUNTRY_NAME]) && strlen($data[self::FIELD__COUNTRY_NAME]);
+        return isset($data[self::COUNTRY_NAME]) && strlen($data[self::COUNTRY_NAME]);
     }
 }

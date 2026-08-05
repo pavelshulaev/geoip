@@ -1,4 +1,4 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -19,7 +19,12 @@ if (empty($arResult['USERS'])){
     return;
 }
 ?><section>
-    <?
+    <?php
+
+    if (!empty($arResult['MESSAGE_CODE']) && $arResult['MESSAGE_CODE'] == 'updated') {
+        ShowNote(Loc::getMessage('rover-gi-ul__updated'));
+    }
+
     $APPLICATION->IncludeComponent(
         "bitrix:main.pagenavigation",
         "",
@@ -30,6 +35,7 @@ if (empty($arResult['USERS'])){
         false
     );?>
     <form class="form" method="post">
+        <?= bitrix_sessid_post();?>
         <input class="btn btn-primary"
                type="submit"
                name="<?=GeoIpUserLocation::INPUT__SUBMIT?>"
@@ -39,7 +45,7 @@ if (empty($arResult['USERS'])){
                 <tr>
                     <th></th>
                     <?php foreach ($arResult['FIELDS'] as $field): ?>
-                        <th><?=$field?>
+                        <th><?= htmlspecialcharsbx($field)?>
                     <?php endforeach; ?>
                 </tr>
             </thead>
@@ -67,23 +73,23 @@ if (empty($arResult['USERS'])){
                         if (in_array($field, $arResult['LOCATION_FIELDS'])):
                             if (in_array($field, $arParams['COUNTRY_FIELDS'])):?>
                                 <select
-                                        name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=$field?>]"
+                                        name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=htmlspecialcharsbx($field)?>]"
                                         class="form-control <?=$inputClass?>">
                                     <?php foreach ($arResult['COUNTRIES'] as $countryId => $countryName): ?>
                                         <option value="<?=$countryId?>"
-                                                <?=$countryId==$value?'selected="selected"':''?>><?=$countryName?></option>
+                                                <?=$countryId==$value?'selected="selected"':''?>><?=htmlspecialcharsbx($countryName)?></option>
                                     <?php endforeach; ?>
                                 </select>
                             <?php else:
                                 ?><input
                                     class="form-control <?=$inputClass?>"
-                                    value="<?=$value?>"
-                                    name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=$field?>]"
+                                    value="<?=htmlspecialcharsbx($value)?>"
+                                    name="<?=GeoIpUserLocation::INPUT__USER?>[<?=$user['ID']?>][<?=htmlspecialcharsbx($field)?>]"
                                     type="text"><?php
                             endif;
 
                         else:?>
-                            <?=$value?>
+                            <?=htmlspecialcharsbx($value)?>
                         <?php endif; ?></td>
                     <?php endforeach; ?>
                 </tr>
@@ -95,7 +101,7 @@ if (empty($arResult['USERS'])){
                name="<?=GeoIpUserLocation::INPUT__SUBMIT?>"
                value="<?=Loc::getMessage('rover-gi-ul__update')?>">
     </form>
-    <?
+    <?php
     $APPLICATION->IncludeComponent(
         "bitrix:main.pagenavigation",
         "",

@@ -9,6 +9,8 @@
  */
 
 namespace Rover\GeoIp;
+
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\SystemException;
 
 /**
@@ -22,61 +24,72 @@ class ServiceContainer
     /**
      * @var Service[][]
      */
-    protected static $services = array();
+    protected static array $services = [];
 
     /**
      * @param      $ip
      * @param      $charset
      * @param bool $reload
-     * @return Service
+     * @return Service|null
+     * @throws ArgumentOutOfRangeException
      * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function getFirstValidService($ip, $charset, $reload = false)
+    public static function getFirstValidService($ip, $charset, bool $reload = false): ?Service
     {
-        $services = self::getServices($ip, $charset, $reload);
+        $services = self::getList($ip, $charset, $reload);
 
-        foreach ($services as $service)
-            if ($service->isValid())
+        foreach ($services as $service) {
+            if ($service->isValid()) {
                 return $service;
+            }
+        }
 
         return null;
     }
 
     /**
-     * @param      $ip
-     * @param      $charset
-     * @param bool $reload
+     * @param       $ip
+     * @param       $charset
+     * @param false $reload
      * @return Service[]
+     * @throws SystemException
+     * @throws ArgumentOutOfRangeException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected static function getServices($ip, $charset, $reload = false)
+    protected static function getList($ip, $charset, bool $reload = false): array
     {
-        $key = md5($ip . $charset);
+        $key = crc32($ip . $charset);
 
-        if (!isset(self::$services[$key]) || $reload)
+        if (!isset(self::$services[$key]) || $reload) {
             self::$services[$key] = Service::getList($ip, $charset);
+        }
 
         return self::$services[$key];
     }
 
     /**
-     * @param $name
-     * @param $ip
-     * @param $charset
-     * @return null|Service
+     * @param string $name
+     * @param string $ip
+     * @param string $charset
+     * @return Service|null
+     * @throws ArgumentOutOfRangeException
+     * @throws SystemException
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public static function getByName($name, $ip, $charset)
+    public static function getByName(string $name, string $ip, string $charset): ?Service
     {
         $name = trim($name);
-        if (!strlen($name))
+        if (!mb_strlen($name)) {
             return null;
+        }
 
-        $services = self::getServices($ip, $charset);
-        foreach ($services as $service)
-            if (strtoupper($service->getManifestField('name')) == strtoupper($name))
+        $services = self::getList($ip, $charset);
+        foreach ($services as $service) {
+            if (mb_strtoupper($service->getName()) == mb_strtoupper($name)) {
                 return $service;
+            }
+        }
 
         return null;
     }

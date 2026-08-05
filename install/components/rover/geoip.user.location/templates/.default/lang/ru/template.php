@@ -7,4 +7,5 @@
  *
  * @author Pavel Shulaev (https://rover-it.me)
  */
-$MESS['rover-gi-ul__update']       = 'Обновить';
+$MESS['rover-gi-ul__update']  = 'Обновить';
+$MESS['rover-gi-ul__updated'] = 'Данные обновлены';

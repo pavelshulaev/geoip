@@ -21,49 +21,52 @@ use Bitrix\Main\Web\Cookie as BxCookie;
  */
 class Cookie
 {
-	const LIFETIME  = 604800; // 1 week
-	const NAME      = 'rover_geoip';
+    const LIFETIME = 604800; // 1 week
+    const NAME     = 'rover_geoip';
 
     /**
      * @param $data
      * @author Pavel Shulaev (https://rover-it.me)
      */
-	public static function set($data)
-	{
-		$cookie = new BxCookie(self::NAME, serialize($data), time() + self::LIFETIME);
+    public static function set($data)
+    {
+        $cookie = new BxCookie(self::NAME, json_encode($data), time() + self::LIFETIME);
 
-		Application::getInstance()
-			->getContext()
-			->getResponse()
-			->addCookie($cookie);
-	}
+        Application::getInstance()
+            ->getContext()
+            ->getResponse()
+            ->addCookie($cookie);
+    }
 
-	/**
-	 * @return mixed|null
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public static function get()
-	{
-		$data = Application::getInstance()
-			->getContext()
-			->getRequest()
-			->getCookie(self::NAME);
+    /**
+     * @return mixed|null
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public static function get()
+    {
+        $data = Application::getInstance()
+            ->getContext()
+            ->getRequest()
+            ->getCookie(self::NAME);
 
-		return unserialize($data);
-	}
+        $decoded = json_decode((string)$data, true);
 
-	/**
-	 * @param $ip
-	 * @return bool
-	 * @author Pavel Shulaev (https://rover-it.me)
-	 */
-	public static function checkIp($ip)
-	{
-		$data = self::get();
+        return is_array($decoded) ? $decoded : null;
+    }
 
-		if (!is_null($data) && isset($data['ip']))
-			return $data['ip'] == $ip;
+    /**
+     * @param $ip
+     * @return bool
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public static function checkIp($ip): bool
+    {
+        $data = self::get();
 
-		return false;
-	}
+        if (!is_null($data) && isset($data['ip'])) {
+            return $data['ip'] == $ip;
+        }
+
+        return false;
+    }
 }

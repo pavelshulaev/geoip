@@ -11,9 +11,7 @@
 namespace Rover\GeoIp\Service;
 
 use Bitrix\Main\Config\Option;
-use Rover\GeoIp\Helper\Charset;
 use Rover\GeoIp\Service;
-use Bitrix\Main\Web\Json;
 
 /**
  * Class Sypex
@@ -23,61 +21,101 @@ use Bitrix\Main\Web\Json;
  */
 class Sypex extends Service
 {
-    const NAME = 'Sypex';
+    protected static $allowedServers = [
+        'ua.sxgeo.city',
+        'de.sxgeo.city',
+        'nl.sxgeo.city',
+        'fr.sxgeo.city',
+        'it.sxgeo.city',
+        'uk.sxgeo.city',
+        'us.sxgeo.city',
+        'us2.sxgeo.city',
+        'us3.sxgeo.city',
+        'jp.sxgeo.city',
+        'sg.sxgeo.city',
+        'ru.sxgeo.city',
+        'api.sypexgeo.net',
+    ];
 
     /**
      * @return bool
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function isActive()
+    public function isActive(): bool
     {
-        return true;
+        return Option::get('rover.geoip', 'sypex-active') == 'Y';
     }
 
     /**
      * @return array
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    public function getManifest()
+    public function getManifest(): array
     {
-        return array(
-            'name'      => self::NAME,
-            'sort'      => 150,
-            'url'       => self::getServerName() . '/json/' . $this->ip,
-            'charset'   => Charset::UTF_8
-        );
-    }
+        $key = trim(self::getKey());
 
-    public function getServerName()
-    {
-        return Option::get('rover.geoip', 'sypex-server', 'api.sypexgeo.net');
+        $url = mb_strlen($key)
+            ? self::getServerName() . '/' . $key . '/json/' . urlencode($this->ip)
+            : self::getServerName() . '/json/' . urlencode($this->ip);
+
+        return [
+            'sort'    => 100,
+            'url'     => 'https://' . $url,
+            'charset' => self::UTF_8
+        ];
     }
 
     /**
-     * @param        $string
-     * @param string $language
-     * @return array|mixed
-     * @throws \Bitrix\Main\ArgumentException
+     * @return string
      * @author Pavel Shulaev (https://rover-it.me)
      */
-    protected function parse($string, $language = LANGUAGE_ID)
+    public function getKey(): string
     {
-        $rawData    = Json::decode($string);
-        $data       = array();
-        $language   = strtolower(trim($language));
+        $key = Option::get('rover.geoip', 'sypex-key', '');
 
-        if (isset($rawData['error'])) {
+        return preg_replace( "/[^a-zA-Z0-9\s]/", '', $key );
+    }
+
+    /**
+     * @return string
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    public function getServerName(): string
+    {
+        $server = trim(mb_strtolower(Option::get('rover.geoip', 'sypex-server', 'api.sypexgeo.net')));
+
+        if (in_array($server, self::$allowedServers)) {
+            return $server;
+        }
+
+        return 'api.sypexgeo.net';
+    }
+
+    /**
+     * @param string $string
+     * @param string $language
+     * @return array
+     * @author Pavel Shulaev (https://rover-it.me)
+     */
+    protected function parse(string $string, string $language = LANGUAGE_ID): array
+    {
+        $rawData = json_decode($string, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);//Json::decode($string);
+
+        $data     = [];
+        $language = strtolower(trim($language));
+
+        if (!empty($rawData['error'])) {
             $data['ERROR'] = $rawData['error'];
         } else {
-            $data[self::FIELD__CITY_NAME]   = isset($rawData['city']['name_' . $language]) ? $rawData['city']['name_' . $language] : '';
-            $data[self::FIELD__LAT]         = isset($rawData['city']['lat']) ? $rawData['city']['lat'] : '';
-            $data[self::FIELD__LNG]         = isset($rawData['city']['lon']) ? $rawData['city']['lon'] : '';
+            $data[self::CITY_NAME] = $rawData['city']['name_' . $language] ?? '';
+            $data[self::LAT]       = $rawData['city']['lat'] ?? '';
+            $data[self::LNG]       = $rawData['city']['lon'] ?? '';
 
-            $data[self::FIELD__REGION_CODE] = isset($rawData['region']['iso']) ? $rawData['region']['iso'] : '';
-            $data[self::FIELD__REGION_NAME] = isset($rawData['region']['name_' . $language]) ? $rawData['region']['name_' . $language] : '';
+            $data[self::REGION_CODE] = $rawData['region']['iso'] ?? '';
+            $data[self::REGION_NAME] = $rawData['region']['name_' . $language] ?? '';
 
-            $data[self::FIELD__COUNTRY_CODE]= isset($rawData['country']['iso']) ? $rawData['country']['iso'] : '';
-            $data[self::FIELD__COUNTRY_NAME]= isset($rawData['country']['name_' . $language]) ? $rawData['country']['name_' . $language] : '';
+            $data[self::COUNTRY_CODE] = $rawData['country']['iso'] ?? '';
+            $data[self::COUNTRY_NAME] = $rawData['country']['name_' . $language] ?? '';
         }
 
         return $data;
