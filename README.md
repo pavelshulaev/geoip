@@ -262,4 +262,11 @@
 
 > Если решение оказалось вам полезным, вы можете оставить пожертвование
 
-[![Donate](https://www.clipartmax.com/middle/m2i8Z5b1A0N4A0A0_donate-now-donate-icon-png|100)](https://pay.cloudtips.ru/p/dc96a2b8){:target="_blank"}
+<a href="https://pay.cloudtips.ru/p/dc96a2b8" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://rover-it.me/marketplace/icon-donate-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://rover-it.me/marketplace/icon-donate-light.svg">
+    <img src="https://rover-it.me/marketplace/icon-donate-light.svg" width="18" alt="Donate">
+  </picture>
+  Сделать пожертвование
+</a>
