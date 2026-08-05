@@ -260,6 +260,6 @@
 
 ## Пожертвования
 
-Если решение оказалось вам полезным, вы можете оставить пожертвование
+> Если решение оказалось вам полезным, вы можете оставить пожертвование
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=V9Y7ZLDB5X8Z6)
+[![Donate](https://www.clipartmax.com/middle/m2i8Z5b1A0N4A0A0_donate-now-donate-icon-png|100)](https://pay.cloudtips.ru/p/dc96a2b8){:target="_blank"}
